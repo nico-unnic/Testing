@@ -1,0 +1,13 @@
+# Arte generado con Higgsfield (ejecutar game/assets/fetch-art.sh cuando el dominio esté permitido)
+portraits/vito.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142843_c85dd377-9fa7-4895-b760-7f008b04133b.png
+portraits/speedy.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142942_64afc54c-8c35-4580-b9fa-dc2589c34820.png
+portraits/elio.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142843_dd480973-3699-451c-8471-9dd5ad37f2d5.png
+portraits/bruno.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142843_ba40b86d-a32c-4a45-bad0-32f2b279b86e.png
+portraits/aldo.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142941_81d07673-030a-4943-8475-95ffeb92b5a5.png
+portraits/marcel.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142953_0ffd04c8-3324-4199-902d-fc4adde818d2.png
+portraits/verbeke.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142844_4c57a0a9-d50e-414a-a5c3-ab1f79c069d8.png
+scenes/keyart.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142843_a8bfd30f-4c16-432f-8c9a-b08dc00a8cb3.png
+scenes/street.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142844_cdf8e5db-0baa-4f7c-8c42-13aa95193e37.png
+scenes/meeting.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142844_e3bc5f32-3ff9-4505-9ea7-05ff1f985b9e.png
+scenes/keyclose.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142843_1c7fc613-daf7-4cfc-885a-8f6ee24a93df.png
+scenes/corridor.png https://d8j0ntlcm91z4.cloudfront.net/user_3Ang6SngcrXzI8U4TRN3jhsa5CY/hf_20261108_142953_5634cf68-d73d-4eef-a64e-2dc07f3cb612.png
