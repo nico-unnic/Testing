@@ -183,8 +183,9 @@ let lc=null;
 R.lighting = function(ctx,S,cam,vw,vh,dpr,ts){
   if (!S.night) return;
   if (!lc) lc=document.createElement('canvas');
-  if (lc.width!==ctx.canvas.width||lc.height!==ctx.canvas.height){ lc.width=ctx.canvas.width; lc.height=ctx.canvas.height; }
-  const l=lc.getContext('2d');
+  const LS=0.5, LW=Math.ceil(ctx.canvas.width*LS), LH=Math.ceil(ctx.canvas.height*LS);
+  if (lc.width!==LW||lc.height!==LH){ lc.width=LW; lc.height=LH; }
+  const l=lc.getContext('2d'); dpr=dpr*LS;
   l.setTransform(1,0,0,1,0,0); l.globalCompositeOperation='source-over'; l.clearRect(0,0,lc.width,lc.height);
   l.fillStyle=`rgba(3,6,16,${S.darkness||0.82})`; l.fillRect(0,0,lc.width,lc.height);
   l.setTransform(dpr*ts,0,0,dpr*ts,dpr*(vw/2-cam.x*ts),dpr*(vh/2-cam.y*ts));
@@ -197,7 +198,7 @@ R.lighting = function(ctx,S,cam,vw,vh,dpr,ts){
       l.fillStyle=g; l.beginPath(); l.moveTo(pts[0][0],pts[0][1]); for(const q of pts) l.lineTo(q[0],q[1]); l.closePath(); l.fill(); } }
   for (const b of S.beams||[]){ glow(b.x,b.y,b.r||2.5,b.a||0.8); }
   if (S.player && S.player.flashlight && !S.player.hidden){ const e=S.player; const pts=G.cone(S.map.grid,e.x,e.y,e.angle,0.5,4.5,16); const g=l.createRadialGradient(e.x,e.y,0,e.x,e.y,4.5); g.addColorStop(0,'rgba(0,0,0,.95)'); g.addColorStop(1,'rgba(0,0,0,0.2)'); l.fillStyle=g; l.beginPath(); l.moveTo(pts[0][0],pts[0][1]); for(const q of pts) l.lineTo(q[0],q[1]); l.closePath(); l.fill(); }
-  ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(lc,0,0);
+  ctx.setTransform(1,0,0,1,0,0); ctx.imageSmoothingEnabled=true; ctx.drawImage(lc,0,0,ctx.canvas.width,ctx.canvas.height); dpr=dpr/LS;
   // tintes de color de las luces
   ctx.setTransform(dpr*ts,0,0,dpr*ts,dpr*(vw/2-cam.x*ts),dpr*(vh/2-cam.y*ts));
   ctx.globalCompositeOperation='lighter';

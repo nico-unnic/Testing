@@ -9,7 +9,7 @@ function labelsDay(api){
   api.clearLabels();
   api.label('planta0',4.5,4.6,'SALA DE CONTROL · PRIVADO','rgba(255,150,150,.55)');
   api.label('planta0',12.5,2.4,'ARCHIVO'); api.label('planta0',19,4.4,'ASCENSORES'); api.label('planta0',26.5,6,'ESCALERA · SÓTANO');
-  api.label('planta0',28,14.6,'GARAJE'); api.label('planta0',4.5,18.7,'SALIDA · HOVENIERSSTRAAT'); api.label('planta0',11,11.0,'RECEPCIÓN');
+  api.label('planta0',28,14.6,'GARAJE'); api.label('planta0',4.5,18.7,'SALIDA · HOVENIERSSTRAAT'); api.label('planta0',11,13.25,'RECEPCIÓN');
   api.label('planta4',15.5,9.35,'4.07 · SALA GEMS','rgba(242,179,61,.7)'); api.label('planta4',5.5,9.35,'PEETERS & ZONEN'); api.label('planta4',24,9.35,'OFFICE');
   api.label('sotano',4,13,'ALMACÉN · PRIVADO','rgba(255,150,150,.55)'); api.label('sotano',20.5,7.5,'ANTESALA'); api.label('sotano',3,4.4,'ESCALERA');
 }
