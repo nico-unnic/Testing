@@ -106,7 +106,34 @@ Briefing (historia) → Planificación (planos, equipo, gadgets) → Ejecución 
 5. **Publicación** en App Store y Google Play.
 6. **Episodios 2, 3…** como actualizaciones.
 
-## 13. Qué tiene que responder el prototipo
+## 13. Cambios tras probar la v1 (prototipo v2)
+
+**Ya está en el prototipo v2:**
+- Joystick virtual y botones a la derecha.
+- Tres formas de moverse:
+  - Andar.
+  - Correr: rápido, pero los vigilantes te oyen a 4,5 casillas.
+  - Agacharse: lento y silencioso, te ven a menos distancia y cabes por los conductos.
+- **Sistema de ruido:** los vigilantes oyen y van a investigar.
+- **Objetos:** monedas para distraer y un cuadro eléctrico que deja a oscuras la planta de oficinas durante 25 s (vigilantes con poca visión y cámaras apagadas).
+- **Nivel con rutas alternativas:** dos conductos de ventilación que esquivan zonas vigiladas.
+- **Preparación del golpe:** escenas de historia con 3 decisiones A/B (llave, compañero, noche) que cambian el nivel:
+  - Llave copiada o la original del almacén.
+  - Sensores más rápidos o cajas más rápidas.
+  - 3 vigilantes y 2 cámaras, o 2 vigilantes y 4 cámaras.
+- El final compara tus decisiones con lo que pasó de verdad.
+
+**Decidido para la producción, aún no en el prototipo:**
+- Escenas de historia con ilustraciones generadas por IA y narración con voz, en vez de dibujos simples.
+- Animaciones de personajes de verdad (sprites) en lugar de círculos.
+
+**Alcance que NO entra:**
+- "Tipo GTA" en sentido literal (mundo abierto en 3D, conducir por una ciudad). Es un proyecto de años con un equipo grande.
+- Lo que sí cabe: **una persecución en coche con vista cenital** como fase de huida en algún episodio (por ejemplo, Banco Río).
+
+**Disparos:** solo en episodios donde el caso real lo justifique, como fase de huida o enfrentamiento, no como mecánica central. Afecta a la clasificación por edades (de 12+ a 16+ o 17+). Hay que decidirlo antes de diseñar el episodio 2.
+
+## 14. Qué tiene que responder el prototipo
 
 - ¿Es cómodo moverse tocando la pantalla, o hace falta un joystick?
 - ¿Se entienden los conos de visión y la barra de sospecha sin explicarlos?
