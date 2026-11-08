@@ -28,7 +28,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 #leftCol{left:calc(var(--sl) + 12px);top:calc(var(--st) + 10px);width:min(30vw,300px);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 #objBox{width:100%;max-width:300px;background:color-mix(in srgb,var(--panel) 86%,transparent);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
 .lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
-#objText{margin:2px 0 0;font-size:13.5px;line-height:1.3;text-wrap:balance}
+#objText{margin:2px 0 0;font-size:13px;line-height:1.28;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #topMid{left:calc(var(--sl) + 12px + min(30vw,300px) + 14px);right:calc(var(--sr) + 200px);top:calc(var(--st) + 12px);display:flex;flex-direction:column;align-items:center;gap:5px}
 .susp{width:100%;display:flex;align-items:center;gap:8px}
 .bar{flex:1;height:5px;border-radius:3px;background:#1f2840;overflow:hidden}
@@ -42,9 +42,9 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 .icon-btn{height:44px;min-width:44px;padding:0 10px;border-radius:6px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 90%,transparent);font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
 .icon-btn b{font-family:var(--font-mono);color:var(--amber);font-weight:500}
 #radio{position:relative;width:100%;display:flex;gap:9px;align-items:flex-start;background:color-mix(in srgb,#0d1a2a 92%,transparent);border:1px solid #2b4a66;border-radius:6px;padding:7px 10px 7px 7px}
-#radio .face{width:34px;height:34px;flex:none;border-radius:4px;overflow:hidden;background:#20324a}
+#radio .face{width:28px;height:28px;flex:none;border-radius:4px;overflow:hidden;background:#20324a}
 #radio .who{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--radio);text-transform:uppercase}
-#radio p{margin:1px 0 0;font-size:13.5px;line-height:1.3}
+#radio p{margin:1px 0 0;font-size:13px;line-height:1.28}
 #toast{left:50%;transform:translateX(-50%);bottom:calc(var(--sb) + 112px);max-width:min(52vw,480px);background:color-mix(in srgb,var(--panel) 94%,transparent);border-left:3px solid var(--amber);padding:7px 12px;font-size:13.5px;line-height:1.35;border-radius:0 6px 6px 0}
 #pad{right:calc(var(--sr) + 14px);bottom:calc(var(--sb) + 14px);display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;gap:10px;align-items:end;justify-items:end;pointer-events:auto}
 .small{width:60px;height:60px;border-radius:50%;border:1.5px solid var(--line);background:color-mix(in srgb,var(--panel) 88%,transparent);font-weight:600;font-size:12px;line-height:1.1;cursor:pointer;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}

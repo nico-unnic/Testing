@@ -139,7 +139,7 @@ function update(dt){
   // Temporizador
   if (S.alarmT>0){ S.alarmT-=dt; if (S.alarmT<=0) for (const g of S.npcs) if (g.speedBase){ g.speed=g.speedBase; } }
   if (S.camLoopT>0) S.camLoopT-=dt;
-  for (const c of S.coinsFly||[]){ c.t+=dt/0.5; if (c.t>=1){ noise(c.tx,c.ty,5.5); (S.coinsFloor=S.coinsFloor||[]).push({x:c.tx,y:c.ty}); } }
+  for (const c of S.coinsFly||[]){ c.t+=dt/0.5; if (c.t>=1){ noise(c.tx,c.ty,5.5,'coin'); (S.coinsFloor=S.coinsFloor||[]).push({x:c.tx,y:c.ty}); } }
   if (S.coinsFly) S.coinsFly=S.coinsFly.filter(c=>c.t<1);
   if (S.timer){ S.timer.left-=dt; if (S.timer.left<=0){ const f=S.timer.onEnd; S.timer=null; f&&f(); } }
   if (S.toastT>0){ S.toastT-=dt; if (S.toastT<=0) $('toast').hidden=true; }
@@ -173,12 +173,12 @@ function updateNpc(e,dt){
       const rush=e.state==='investigate';
       if (follow(e,rush?e.speed*1.45:e.speed,dt)){ turn(e,e.moveAngle,rush?8:6,dt); e.moving=true; e.phase+=dt*e.speed*3; }
       if (!e.path.length){ if (rush && e.checkCab){ const cab=e.checkCab; e.checkCab=null; e.angle=Math.atan2(cab.y+0.5-e.y,cab.x+0.5-e.x);
-            if (S.player.hidden===cab) return G.fail((e.caughtLine||'Te han encontrado.').replace(/ te ha visto\./,' ha abierto el armario.'),'caught');
+            if (S.player.hidden===cab) return G.fail(`${G.CHARS[e.char].name} ha abierto el armario. «¡Fuera de ahí!»`,'caught');
             A.sfx('door'); }
-          if (rush){ e.state='look'; e.timer=2.4; e.searchLeft = e.searchLeft===undefined ? 2 : e.searchLeft; } else { e.state='wait'; const w=e.wps[e.wi]; e.timer=w[2]||1; if (w[3]!==undefined) e.faceTo=w[3]; } e.base=e.faceTo!==undefined?e.faceTo:e.angle; e.faceTo=undefined; e.look=0; }
+          if (rush){ e.state='look'; e.timer=2.4; e.searchLeft = e.searchLeft===undefined ? 2 : e.searchLeft; } else { e.state='wait'; const w=e.wps[e.wi]; e.timer=(w[2]||1)*(e.role==='guard'?0.6+Math.random()*0.8:1); if (w[3]!==undefined) e.faceTo=w[3]; } e.base=e.faceTo!==undefined?e.faceTo:e.angle; e.faceTo=undefined; e.look=0; }
     } else if (e.state==='wait'){
       e.timer-=dt; turn(e,e.base+Math.sin(e.look*1.4)*(e.lookAmp||0.6),4,dt);
-      if (e.timer<=0){ e.wi=(e.wi+1)%e.wps.length; const w=e.wps[e.wi]; e.path=pathTo(e,w[0]+0.5,w[1]+0.5); e.state='patrol'; }
+      if (e.timer<=0){ e.wi=(e.wi+1)%e.wps.length; if (e.watchHook && S.flags.hasKey && e.hookWp!==undefined && Math.random()<0.35) e.wi=e.hookWp; const w=e.wps[e.wi]; e.path=pathTo(e,w[0]+0.5,w[1]+0.5); e.state='patrol'; }
     } else if (e.state==='look'){
       e.timer-=dt; e.angle=e.base+Math.sin(e.look*2.2)*1.1;
       if (e.timer<=0){
@@ -197,7 +197,7 @@ function updateNpc(e,dt){
     if (e.watchHook && S.flags.hasKey && S.map){ const h=e.watchHook, d=Math.hypot(h.x-e.x,h.y-e.y);
       if (d<R0 && Math.abs(G.angDiff(Math.atan2(h.y-e.y,h.x-e.x),e.angle))<e.fov && G.los(S.map.grid,e.x,e.y,h.x,h.y)) return G.fail('Verbeke ha mirado el gancho del almacén y estaba vacío. Mañana cambiarán la cerradura.','time'); }
     const s=sees(e,R0,e.fov);
-    if (s>0){ e.susp=Math.min(1,e.susp+dt*(0.8+2.4*s)*(S.player.crouch?0.65:1)); e.retarget=(e.retarget||0)-dt;
+    if (s>0){ e.susp=Math.min(1,e.susp+dt*Math.min(1.6,(0.8+2.4*s)*(S.player.crouch?0.65:1))); e.retarget=(e.retarget||0)-dt;
       if (e.susp>0.3 && e.retarget<=0 && !e.scripted){ e.path=pathTo(e,S.player.x,S.player.y); e.state='investigate'; e.retarget=0.4; }
       if (e.susp>0.3 && !e.alerted){ e.alerted=true; S.alerts=(S.alerts||0)+1; A.sfx('alert'); S.hooks&&S.hooks.onAlert&&S.hooks.onAlert(e); }
       if (e.susp>0.62 && !(S.alarmT>0)) raiseAlarm(e); }
@@ -230,11 +230,11 @@ function updateCam(c,dt){
 function raiseAlarm(e){ S.alarmT=22; S.alarmBy=e?G.CHARS[e.char].name:'La cámara'; A.sfx('alert');
   for (const g of S.npcs) if (g.role==='guard' && g!==e && !g.scripted){ g.speedBase=g.speedBase||g.speed; g.speed=g.speedBase*1.2; } }
 G.raiseAlarm=raiseAlarm;
-function noise(x,y,r){
+function noise(x,y,r,kind){
   S.rings=S.rings||[]; S.rings.push({x,y,r,t:0});
   for (const e of S.npcs){ if (e.role!=='guard'||e.scripted||e.visible===false) continue; const d=Math.hypot(e.x-x,e.y-y);
     if (d<=r && (d<=r*0.5||G.los(S.map.grid,e.x,e.y,x,y))){ e.path=pathTo(e,x,y); e.state='investigate'; e.susp=Math.max(e.susp,0.2);
-      if(!e.alerted){e.alerted=true;S.alerts=(S.alerts||0)+1; S.hooks&&S.hooks.onAlert&&S.hooks.onAlert(e,'noise');} } }
+      if(!e.alerted){e.alerted=true;S.alerts=(S.alerts||0)+1; S.hooks&&S.hooks.onAlert&&S.hooks.onAlert(e,kind||'noise');} } }
 }
 G.noise=noise;
 
@@ -266,7 +266,7 @@ function currentAction(){
   const p=S.player;
   if (p.hidden) return {it:{label:'Salir', hold:0, fn:unhide}};
   let best=null,bd=99;
-  for (const it of S.interact){ if (it.cond && !it.cond()) continue; const d=it.self?0.01:Math.hypot(it.x-p.x,it.y-p.y); if (d>(it.r||1.4)) continue;
+  for (const it of S.interact){ if (it.cond && !it.cond()) continue; const d=it.self?1.25:Math.hypot(it.x-p.x,it.y-p.y); if (d>(it.r||1.4)) continue;
     if (d<bd){ bd=d; best=it; } }
   return best?{it:best}:null;
 }
@@ -377,7 +377,7 @@ function draw(t){
     else if (e.showName && Math.hypot(e.x-p.x,e.y-p.y)<4){ ctx.font=`500 ${Math.max(10,Math.round(ts*0.24))}px 'IBM Plex Mono',monospace`; ctx.fillStyle='rgba(236,230,214,.75)'; ctx.fillText(G.CHARS[e.char].name.toUpperCase(),sx,sy); } }
   for (const L of S.labels||[]){ if (L.map!==S.mapId) continue; const [sx,sy]=toS(L.x,L.y); if (sx<-60||sx>vw+60||sy<-20||sy>vh+20) continue;
     ctx.font=`500 ${Math.max(9,Math.round(ts*0.22))}px 'IBM Plex Mono',monospace`; ctx.fillStyle=L.col||'rgba(236,230,214,.45)'; ctx.fillText(L.text,sx,sy); }
-  if (S.zonesArmed) for (const z of m.zones){ if (S.flags['off_'+z.id]) continue; const [sx,sy]=toS(z.x0+0.5,(z.y0+z.y1)/2+0.5); ctx.save(); ctx.translate(sx,sy); ctx.rotate(-Math.PI/2); ctx.font=`500 ${Math.max(9,Math.round(ts*0.22))}px 'IBM Plex Mono',monospace`; ctx.fillStyle='rgba(255,140,140,.75)'; ctx.fillText(z.label,0,0); ctx.restore(); }
+  if (S.zonesArmed) for (const z of m.zones){ if (S.flags['off_'+z.id]) continue; const [sx,sy]=toS(z.x0+0.5,z.y1+0.6); ctx.font=`600 ${Math.max(10,Math.round(ts*0.24))}px 'IBM Plex Mono',monospace`; ctx.fillStyle='rgba(255,140,140,.85)'; ctx.fillText(z.label,sx,sy); }
   // joystick
   if (S.mode==='play' && !S.locked){ const j=I.joy, jx=j.id!==null?j.ox:Math.max(70,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sl'))+70), jy=j.id!==null?j.oy:vh-78;
     ctx.strokeStyle=j.id!==null?'rgba(236,230,214,.35)':'rgba(236,230,214,.13)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(jx,jy,I.JR,0,7); ctx.stroke();
@@ -524,7 +524,7 @@ G.fail = function(reason,kind){
   kind = kind || (/cámara/i.test(reason)?'camera':/sensor/i.test(reason)?'alarm':/tiempo|cerradura/i.test(reason)?'time':'caught');
   setTimeout(()=>{
     sheet(`<p class="stamp red">${kind==='cover'?'Tapadera descubierta':'Detenido'}</p><h2>${kind==='cover'?'Te han calado':'Se acabó'}</h2><p class="meta">${S.chapterTitle||''}</p>
-      <p>${reason}</p><p><b>Consejo:</b> ${TIPS[kind]||''}</p>
+      <p>${reason}</p><p><b>Consejo:</b> ${TIPS[kind]||''}</p>${S.retryFrom?`<p><b>Al reintentar</b> vuelves a ${S.retryFrom}.</p>`:''}
       <div class="pbtns"><button class="pbtn" id="fRetry">Reintentar</button><button class="pbtn alt" id="fTitle">Menú principal</button></div>`);
     $('fRetry').onclick=()=>{ closeSheet(); G.runChapter(S.chapterId,{retry:true}); };
     $('fTitle').onclick=()=>{ closeSheet(); G.showTitle(); };
@@ -557,7 +557,7 @@ const api = G.api = {
   label(map,x,y,text,col){ S.labels=S.labels||[]; S.labels.push({map,x,y,text,col}); },
   clearLabels(){ S.labels=[]; },
   timer(label,secs,onEnd){ S.timer={label,left:secs,onEnd}; }, clearTimer(){ S.timer=null; },
-  hooks(h){ S.hooks=h; }, sfx:A.sfx, ambient:A.ambient,
+  hooks(h){ S.hooks=h; }, retryFrom(t){ S.retryFrom=t; }, sfx:A.sfx, ambient:A.ambient,
   camTo(x,y){ S.camTarget = x===null?null:{x,y}; },
   backdrop(key){ const el=$('backdrop'); if (!key){ el.hidden=true; S.backdrop=null; return; } S.backdrop=key; el.hidden=false;
     const c=$('backdropCv'); c.width=Math.round(innerWidth*dpr); c.height=Math.round(innerHeight*dpr); c.hidden=false; R.illusFallback(c,key,0);
@@ -572,9 +572,11 @@ G.runChapter = async function(id,opts={}){
   G.token++; const tk=G.token;
   closeSheet(); $('title').hidden=true; $('card').hidden=true; $('illus').hidden=true; $('dlg').hidden=true; dlgState=null; $('fade').style.opacity='0';
   $('radio').hidden=true; $('toast').hidden=true; waiters.length=0; $('backdrop').hidden=true; S.backdrop=null;
+  const carry = (opts.retry && S.chapterId===id) ? {alerts:S.alerts||0, time:S.time||0, attempts:(S.attempts||1)+1} : {alerts:0,time:0,attempts:1};
   const ch=G.chapters[id]; S.chapterId=id; S.chapterTitle=ch.title;
   Object.assign(S,{ mode:'play', locked:false, flags:{}, photos:{}, warnings:0, alerts:0, time:0, objective:'', timer:null, hooks:null, labels:[], photoEnabled:false, camTarget:null, alarmT:0, camLoopT:0, coins:undefined, coinsFly:[], coinsFloor:[], allowHide:true, zonesArmed:false, maxSusp:0, showJoyHint:false });
   S.player = makeEntity('vito',{x:2,y:2,angle:0}); S.player.crouch=false;
+  S.alerts=carry.alerts; S.time=carry.time; S.attempts=carry.attempts; S.retryFrom='';
   G.unlock(id); G.P.last=id; G.saveProgress();
   try { await ch.run(api,opts); }
   catch(err){ if (err!==ABORT) { console.error(err); } }

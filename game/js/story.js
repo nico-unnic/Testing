@@ -23,7 +23,7 @@ G.chapters.prologue = { title:'Prólogo · La llave no gira', async run(api){
   api.loadMap('sotano',{night:true, spawn:'stairs', angle:PI/2});
   S.darkness=0.86; S.allowHide=false; S.flags.vitoTorch=true;
   api.label('sotano',20.5,7.5,'ANTESALA');
-  api.spawn('speedy',{at:{x:4.4,y:3.4}, role:'friend', speed:3, flashlight:true, range:3.5, fov:0.5});
+  api.spawn('speedy',{at:{x:3.2,y:2.2}, role:'friend', speed:3, flashlight:true, range:3.5, fov:0.5, ghost:true});
   S.player.flashlight=true;
   S.showJoyHint=true;
   api.objective('Llega a la puerta de la cámara acorazada.');
@@ -74,12 +74,13 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
 
   api.hooks({
     onPhoto(id){
-      if (id==='key'){ P.keyPhoto=true; catchAbort(api.say('vito','(Diez capas de seguridad… y la llave duerme en un trastero.)')); }
+      if (id==='key'){ P.keyPhoto=true; api.radio('vito','Diez capas de seguridad… y la llave duerme en un trastero.',5,'piensa'); }
       if (st.phoneDone) objPhotos();
       if (id==='monitores') api.radio('speedy','¿Has entrado en la sala de control? ¿Tú estás loco? Bien. Bien hecho. Loco.',4);
     },
     onMap(id){
       if (id!=='sotano' && !st.ritual) api.clearTimer();
+      if (id!=='planta4') S.flags.phoneRinging=false;
       if (id==='planta0'){
         api.spawn('marcel',{at:'marcel', role:'staff', angle:PI/2, range:6, fov:0.6, showName:true, idleLook:{base:PI/2, speed:0.5, th:0.55, alt:-2.2}});
         api.spawn('jansen',{at:'jansen', role:'staff', angle:-PI/2, range:6.5, fov:0.7, showName:true, idleLook:{base:-PI/2, speed:0.6, th:0.5, alt:1.0}});
@@ -202,9 +203,10 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
     await api.say('speedy','(Con la boca llena.) ¿Y si la cogemos y ya está?');
     await api.say('vito','Si una mañana falta la llave, cambian la cerradura. Y nos quedamos sin golpe.');
     if (P.keyPhoto) await api.say('aldo','Pero si la tengo en la mano un minuto… saco un molde. Y vuelve al gancho antes de que nadie la eche de menos.');
-    await api.say('elio','O me dejáis meter una cámara ahí abajo y la copiamos sin tocarla. Limpio.');
-    const opts=['«Elio, mete tu cámara.» · Plan: microcámara'];
-    if (P.keyPhoto) opts.push('«Aldo, prepara el molde.» · Plan: molde');
+    await api.say('elio','O me dejáis meter una cámara ahí abajo y la copiamos sin tocarla. Limpio. Eso sí: el detector de humo está pasado el sensor térmico. Habrá que cegarlo con mi laca, de noche, con el sensor armado.');
+    if (P.keyPhoto) await api.say('aldo','Mi molde es más rápido, pero hay que tocar la llave. Si Verbeke mira el gancho y lo ve vacío, cambian la cerradura y se acabó todo.');
+    const opts=['«Elio, mete tu cámara.» · Cruzar los sensores con la laca'];
+    if (P.keyPhoto) opts.push('«Aldo, prepara el molde.» · Coger la llave delante de Verbeke');
     else await api.say('vito','(Sin saber dónde guardan la llave, solo queda el plan de Elio.)');
     const c=await api.say('narrator','Todos miran a Vito. ¿Qué plan eliges?',opts);
     P.plan = c===1 ? 'mold' : 'cam';
@@ -234,7 +236,7 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
   const objMain = plan==='cam' ? 'Baja al sótano. Ciega el sensor térmico con la laca de Elio y esconde la microcámara en el detector de humo de la antesala.' : 'Baja al sótano y coge la llave del almacén. Saca un molde y devuélvela al gancho antes de que Verbeke pase a mirarlo.';
   const objOut = 'Hecho. Sube por la escalera, sal por la puerta de emergencia y vuelve al coche de Speedy, en el garaje.';
   api.hooks({
-    onAlert(e,kind){ const now=S.time||0; if (now-st.radioAlertT>7){ st.radioAlertT=now; api.radio('speedy',kind==='noise'?'¿Eso eran pasos? ¿Tuyos? Vito, más despacio…':'Vito. Vito. Vito.',3.5); } },
+    onAlert(e,kind){ if (kind==='coin') return; const now=S.time||0; if (now-st.radioAlertT>7){ st.radioAlertT=now; api.radio('speedy',kind==='noise'?'¿Eso eran pasos? ¿Tuyos? Vito, más despacio…':'Vito. Vito. Vito.',3.5); } },
     onMap(id){
       if (id==='planta0'){
         S.map.props.push({type:'emergency',x:26,y:8,w:1,h:1,solid:true}); S.map.grid.solid[S.map.grid.i(26,8)]=1;
@@ -259,7 +261,7 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
         if (S.flags.off_heat){ const pr=S.map.props.find(q=>q.id==='heat'); if(pr) pr.armed=false; }
         api.interact({id:'stairsUp', x:2.6,y:2.6, r:1.6, label:'Subir a la planta baja', fn:()=>catchAbort(api.travel('planta0','stairs'))});
         api.spawn('verbeke',{at:{x:10.5,y:7.3}, role:'guard', speed:1.65, flashlight:true, range:5, fov:0.58, angle:-PI/2, caughtLine:'Verbeke te ha visto. «¡Quieto ahí!»',
-          wps:[[10,7,4,-PI/2],[14,7,2.5,0],[8,7,1],[4,10,2.2,PI-0.1],[2,7,1.5,PI]], watchHook:{x:2.5,y:10.15}});
+          wps:[[10,7,4,-PI/2],[14,7,2.5,0],[8,7,1],[4,10,2.2,PI-0.1],[2,7,1.5,PI]], watchHook:{x:2.5,y:10.15}, hookWp:3});
         if (plan==='cam'){
           api.interact({id:'laca', x:19.4,y:3.6, r:1.3, label:'Laca al sensor térmico', hold:2.5, cond:()=>!S.flags.off_heat, fn:()=>{ S.flags.off_heat=true; const pr=S.map.props.find(q=>q.id==='heat'); if(pr) pr.armed=false; api.radio('elio','¿Ves? Laca. Cuarenta años de ingeniería alemana y una laca de supermercado.',4.5); }});
           api.interact({id:'smoke', x:21.5,y:4.7, r:1.5, label:'Colocar la microcámara', hold:3, cond:()=>!S.flags.microcam, fn:()=>{ S.flags.microcam=true; done('¡Bien! ¿Bien? Dime que bien.'); }});
@@ -273,19 +275,24 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
           api.interact({id:'retKey', x:2.5,y:10.2, r:1.3, label:'Devolver la llave', hold:0.8, cond:()=>S.flags.hasKey&&S.flags.molded, fn:()=>{
             S.flags.hasKey=false; S.flags.returned=true; S.flags.keyOnHook=true; S.player.carry=false; done('¿Ya? ¿Ya está? ¡Aldo dice que te quiere!'); }});
         }
+        if (!st.done && !(G.P.cp2&&G.P.cp2.stage)){ G.P.cp2={plan,stage:'basement'}; G.saveProgress(); api.retryFrom('la escalera del sótano'); api.toast('Punto de control: escalera del sótano.',2.5); }
         if (!st.downTold){ st.downTold=true; api.radio('speedy','Abajo hay cobertura de pena. Si no te oigo, es que estás bien. O no. No sé.',4.5); }
       }
     },
   });
-  function done(line){ st.done=true; G.P.cp2=plan; G.saveProgress(); api.toast('Punto de control guardado.',2.5); api.objective(objOut); api.radio('speedy',line,4); api.sfx('ok'); }
+  function done(line){ st.done=true; G.P.cp2={plan,stage:'done'}; G.saveProgress(); api.retryFrom('la salida de emergencia, con el objetivo cumplido'); api.toast('Punto de control guardado.',2.5); api.objective(objOut); api.radio('speedy',line,4); api.sfx('ok'); }
   async function ending(){
     api.lock(); await api.fade(true); api.backdrop('car'); await api.fade(false);
     S.flags.vitoHidden=true;
     await api.say('speedy','(En el coche, comiendo.) ¿Ves? Fácil.');
     await api.say('vito','Tira eso. Me estás llenando el coche de migas.');
     await api.say('speedy','Luego lo tiro.');
+    if (plan==='mold') await api.say('speedy','Aldo dice que la copia estará en tres días. Que la va a hacer a mano. Que las máquinas no tienen alma. ¿Tú sabías que las llaves tienen alma?');
+    else await api.say('speedy','Elio dice que va a tener cuarenta horas de vídeo de un señor abriendo una puerta. Que es su película favorita.');
     await api.say('vito','(Mira el edificio por el retrovisor. Quedan once meses.)');
-    P.stats.ch2={ time:Math.round(S.time||0), alerts:S.alerts||0, plan };
+    if ((P.trust||0)>0) await api.say('narrator','A la mañana siguiente, Marcel te saluda desde recepción: «¿Madrugando, señor Sala? Así se gana el Antwerp la liga».');
+    else await api.say('narrator','A la mañana siguiente, Marcel te sigue con la mirada un segundo más de lo normal. Apunta algo en su libreta.');
+    P.stats.ch2={ time:Math.round(S.time||0), alerts:S.alerts||0, plan, attempts:S.attempts||1 };
     G.saveProgress();
     await api.fade(true);
     api.backdrop(null);
@@ -293,7 +300,9 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
     G.showEnd();
   }
   if (!opts.retry) G.P.cp2=null;
-  if (opts.retry && G.P.cp2===plan){ st.done=true; S.coins=3; api.loadMap('planta0',{night:true, spawn:'emergencyIn', angle:PI/2}); S.darkness=0.8; api.objective(objOut); return; }
+  const cp = opts.retry && G.P.cp2 && G.P.cp2.plan===plan ? G.P.cp2 : null;
+  if (cp && cp.stage==='done'){ st.done=true; api.retryFrom('la salida de emergencia, con el objetivo cumplido'); api.loadMap('planta0',{night:true, spawn:'emergencyIn', angle:PI/2}); S.darkness=0.8; api.objective(objOut); return; }
+  if (cp && cp.stage==='basement'){ st.downTold=true; api.retryFrom('la escalera del sótano'); api.loadMap('sotano',{night:true, spawn:'stairs', angle:0}); S.darkness=0.8; api.objective(objMain); return; }
   api.loadMap('planta0',{night:true, spawn:'garage', angle:PI});
   S.darkness=0.8;
   api.objective(objMain);
@@ -312,7 +321,7 @@ G.showEnd = function(){
   G.$('fade').style.opacity='0';
   G.$('sheetBody').innerHTML=`<p class="stamp green">Fin del primer bloque</p><h2>Diez capas · Capítulos 0–2</h2><p class="meta">Tu partida</p>
     <div class="stats"><div><span>Fotos</span><b>${c1.photos||0}/6</b></div><div><span>Advertencias</span><b>${c1.warnings||0}</b></div><div><span>Marcel</span><b>${(P.trust||0)>0?'Amigo':'Desconfía'}</b></div>
-    <div><span>Plan de la llave</span><b>${c2.plan==='mold'?'Molde':'Microcámara'}</b></div><div><span>Sospechas</span><b>${c2.alerts||0}</b></div><div><span>Tiempo cap. 2</span><b>${fmt(c2.time)}</b></div></div>
+    <div><span>Plan de la llave</span><b>${c2.plan==='mold'?'Molde':'Microcámara'}</b></div><div><span>Sospechas</span><b>${c2.alerts||0}</b></div><div><span>Tiempo cap. 2</span><b>${fmt(c2.time)}</b></div><div><span>Intentos cap. 2</span><b>${c2.attempts||1}</b></div></div>
     <p>Lo que has decidido hoy cambia el golpe: cómo te mira Marcel, qué sabe la banda del sótano y cómo será la llave la noche del 15 de febrero.</p>
     <p><b>Próximamente:</b> Capítulo 3 · La réplica, Capítulo 4 · El golpe y Capítulo 5 · La basura.</p>
     <div class="pbtns"><button class="pbtn" id="eRe">Repetir capítulo 2</button><button class="pbtn alt" id="eTitle">Menú principal</button></div>`;

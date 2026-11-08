@@ -105,12 +105,12 @@ MAPS.sotano = () => build(28,16,(g,P)=>{
   P('shelf',1,14,{w:3,opaque:true}); P('locker',5,14,{w:2,opaque:true}); P('cabinet',6,10,{opaque:true,hide:true});
   P('desk',9,6,{w:2,lamp:true,papers:true});
   P('crate',6,8,{opaque:true}); P('crate',12,6,{opaque:true}); P('cabinet',8,8,{opaque:true,hide:true});
-  P('cabinet',16,12,{opaque:true,hide:true});
+  P('cabinet',16,12,{opaque:true,hide:true}); P('cabinet',5,1,{opaque:true,hide:true}); P('cabinet',5,6,{opaque:true,hide:true});
   return { name:'Sótano −2',
-    spots:{ stairs:{x:4.5,y:2.6}, corrW:{x:2.5,y:7}, storageOut:{x:4.5,y:7.3}, storageIn:{x:4.5,y:10.7}, anteDoor:{x:14.5,y:7.5}, anteIn:{x:17.2,y:7.5},
+    spots:{ stairs:{x:1.6,y:3.6}, corrW:{x:2.5,y:7}, storageOut:{x:4.5,y:7.3}, storageIn:{x:4.5,y:10.7}, anteDoor:{x:14.5,y:7.5}, anteIn:{x:17.2,y:7.5},
       vaultFront:{x:25,y:7.5}, keyhook:{x:2.5,y:10.4}, verbekeDesk:{x:10,y:7.3}, smoke:{x:21.5,y:5.2}, corrMid:{x:8,y:7} },
     restricted:[{x0:1,y0:10,x1:6,y1:14,out:'storageOut',name:'el almacén'}],
-    zones:[{id:'heat',x0:20,y0:3,x1:20,y1:12,label:'SENSOR TÉRMICO'},{id:'light',x0:23,y0:3,x1:23,y1:12,label:'SENSOR DE LUZ'}],
+    zones:[{id:'heat',x0:20,y0:3,x1:20,y1:12,label:'TÉRMICO'},{id:'light',x0:23,y0:3,x1:23,y1:12,label:'LUZ'}],
     photos:[
       {id:'sensor_heat', x:20.5,y:2.7, lx:20.5, ly:3.1, label:'Sensor térmico', note:'Calor y movimiento. Elio dirá que se puede cegar.'},
       {id:'sensor_light', x:23.5,y:13.3, lx:23.5, ly:12.9, label:'Sensor de luz', note:'Si alguien enciende una linterna ahí dentro, salta.'},
