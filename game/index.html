@@ -122,6 +122,10 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 #rotate{background:#05080f;flex-direction:column;gap:12px;text-align:center;z-index:50}
 #rotate .ph{width:44px;height:74px;border:3px solid var(--ink);border-radius:8px;animation:rot 2s ease-in-out infinite}
 @keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+#backdrop{position:fixed;inset:0;z-index:11;background:#000}
+#backdrop .img{position:absolute;inset:0;background:#000 center/cover no-repeat}
+#backdrop canvas{position:absolute;inset:0;width:100%;height:100%}
+#pad{opacity:.88}
 #fade{position:fixed;inset:0;background:#000;pointer-events:none;opacity:0;transition:opacity .45s;z-index:10}
 #flash{position:fixed;inset:0;background:#fff;pointer-events:none;opacity:0;z-index:25}
 .full{z-index:20}
@@ -156,6 +160,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
   <div class="box"><div class="name" id="dlgName"></div><p class="text" id="dlgText"></p><div id="choices"></div><div class="more" id="dlgMore">▸ toca</div></div>
 </div>
 
+<div id="backdrop" hidden><div class="img" id="backdropImg"></div><canvas id="backdropCv"></canvas></div>
 <div class="full" id="card" hidden><div class="l1" id="cardL1"></div><div class="l2" id="cardL2"></div><div class="l3" id="cardL3"></div></div>
 <div class="full" id="illus" hidden><div class="img" id="illusImg"></div><canvas id="illusCv"></canvas><div class="cap"><div class="k" id="illusK"></div><p id="illusText"></p><div class="tap">▸ toca para continuar</div></div></div>
 

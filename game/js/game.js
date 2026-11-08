@@ -191,6 +191,7 @@ function updateNpc(e,dt){
     const L=e.idleLook; e.angle = L.base + (Math.sin(e.look*(L.speed||0.5))>L.th ? L.alt : Math.sin(e.look*1.3)*0.25);
   }
   // Percepción
+  if (S.locked && (e.role==='guard'||e.role==='staff')){ S.maxSusp=Math.max(S.maxSusp,e.susp); return; }
   if (e.role==='guard' && S.night){
     const alarm=S.alarmT>0, R0=e.range*(alarm?1.15:1);
     if (e.watchHook && S.flags.hasKey && S.map){ const h=e.watchHook, d=Math.hypot(h.x-e.x,h.y-e.y);
@@ -212,6 +213,7 @@ function updateNpc(e,dt){
   S.maxSusp=Math.max(S.maxSusp,e.susp);
 }
 function updateCam(c,dt){
+  if (S.locked) return;
   c.off = S.camLoopT>0; c.t+=dt; if (c.off){ c.susp=Math.max(0,c.susp-dt); const pr=S.map.props.find(q=>q.id===c.id); if(pr){pr.off=true;} return; } else { const pr=S.map.props.find(q=>q.id===c.id); if(pr) pr.off=false; } c.angle=(c.a0+(c.a1-c.a0)*(0.5+0.5*Math.sin(c.t*0.5)))*Math.PI/180;
   const pr=S.map.props.find(q=>q.id===c.id); if (pr){ pr.angle=c.angle; pr.alarm=c.susp>0.35; }
   const p=S.player; let s=0;
@@ -252,7 +254,7 @@ async function warning(e,z,photo){
     await G.api.say(e.char,(photo?PHOTO_LINES:WARN_LINES)[Math.min(2,S.warnings-1)]);
     if (tk!==G.token) return;
     if (S.warnings>=3) return G.fail('Has levantado demasiadas sospechas. Tu tapadera de inquilino se ha acabado antes de empezar.','cover');
-    if (!photo){ await G.api.say('vito', ['Perdone. Buscaba el baño.','Me he equivocado de puerta.','Ya me iba.'][Math.min(2,S.warnings-1)]); }
+    if (!photo){ await G.api.say('vito', ['Perdone. Pensaba que era el cuarto de las calderas.','Me he vuelto a confundir de puerta. La edad.','Ya me iba. De verdad.'][Math.min(2,S.warnings-1)]); }
     if (z){ const o=S.map.spots[z.out]; S.player.x=o.x; S.player.y=o.y; }
     G.api.toast(`Advertencia ${S.warnings} de 3. A la tercera se acaba tu tapadera.`);
   } catch(err){ if (err!==ABORT) throw err; }
@@ -389,6 +391,8 @@ function draw(t){
 let lastAct='';
 function hud(){
   const play=S.mode==='play' && !S.locked;
+  const cut=S.mode==='cut'||!!S.backdrop;
+  $('leftCol').style.visibility=cut?'hidden':'visible'; $('topMid').style.visibility=cut?'hidden':'visible';
   $('objBox').hidden=!S.objective; $('objText').textContent=S.objective||'';
   $('topMid').hidden=false;
   const showSusp = S.night || S.warnings>0 || S.maxSusp>0.02;
@@ -398,7 +402,7 @@ function hud(){
   const tc=$('timeChip'); const chipT = S.timer ? `${S.timer.label} ${Math.ceil(S.timer.left)} s` : S.alarmT>0 ? `ALERTA · ${S.alarmBy} ha avisado por radio` : S.camLoopT>0 ? `CÁMARA EN BUCLE ${Math.ceil(S.camLoopT)} s` : S.flags.hasKey ? 'EL GANCHO ESTÁ VACÍO' : '';
   tc.hidden=!chipT; tc.textContent=chipT; tc.classList.toggle('warn',S.alarmT>0||!!S.flags.hasKey);
   const cb2=$('coinBtn'); cb2.hidden=!(S.night && S.coins!==undefined); $('coinN').textContent=S.coins||0; cb2.disabled=!(S.coins>0);
-  $('topRight').hidden=!play; $('photoCount').textContent=Object.keys(S.photos).length;
+  $('topRight').hidden=!play||cut; $('photoCount').textContent=Object.keys(S.photos).length||Object.keys(G.P.photos||{}).length;
   $('pad').hidden=!play;
   $('photoBtn').hidden=!S.photoEnabled;
   const cb=$('crouchBtn'); cb.classList.toggle('on',!!S.player.crouch); cb.textContent=S.player.crouch?'De pie':'Agachar';
@@ -469,7 +473,8 @@ function illus(key,kicker,text){
     S.illusKey=key; const c=$('illusCv'); c.width=Math.round(innerWidth*dpr); c.height=Math.round(innerHeight*dpr); c.hidden=false; R.illusFallback(c,key,0);
     const im=$('illusImg'); im.style.backgroundImage='';
     const img=new Image(); img.onload=()=>{ im.style.backgroundImage=`url(${img.src})`; c.hidden=true; }; img.src=`assets/scenes/${key}.png`;
-    let typing=true; typeInto($('illusText'),text,18).then(()=>typing=false);
+    const tapEl=el.querySelector('.tap'); tapEl.style.visibility='hidden';
+    let typing=true; typeInto($('illusText'),text,18).then(()=>{ typing=false; tapEl.style.visibility='visible'; });
     const done=()=>{ if (typing){ S.skipType=true; setTimeout(()=>S.skipType=false,50); return; } el.removeEventListener('pointerdown',done); I.handlers.advanceIllus=null; el.hidden=true; S.mode='play'; if (tk!==G.token) return rej(ABORT); res(); };
     el.addEventListener('pointerdown',done); I.handlers.advanceIllus=done;
   });
@@ -554,6 +559,9 @@ const api = G.api = {
   timer(label,secs,onEnd){ S.timer={label,left:secs,onEnd}; }, clearTimer(){ S.timer=null; },
   hooks(h){ S.hooks=h; }, sfx:A.sfx, ambient:A.ambient,
   camTo(x,y){ S.camTarget = x===null?null:{x,y}; },
+  backdrop(key){ const el=$('backdrop'); if (!key){ el.hidden=true; S.backdrop=null; return; } S.backdrop=key; el.hidden=false;
+    const c=$('backdropCv'); c.width=Math.round(innerWidth*dpr); c.height=Math.round(innerHeight*dpr); c.hidden=false; R.illusFallback(c,key,0);
+    const im=$('backdropImg'); im.style.backgroundImage=''; const img=new Image(); img.onload=()=>{ if (S.backdrop===key){ im.style.backgroundImage=`url(${img.src})`; c.hidden=true; } }; img.src=`assets/scenes/${key}.png`; },
   setPhoto(v){ S.photoEnabled=v; }, photoCount:()=>Object.keys(S.photos).length,
   fail:(r,k)=>G.fail(r,k),
 };
@@ -563,7 +571,7 @@ G.chapters = {}; G.chapterOrder=[];
 G.runChapter = async function(id,opts={}){
   G.token++; const tk=G.token;
   closeSheet(); $('title').hidden=true; $('card').hidden=true; $('illus').hidden=true; $('dlg').hidden=true; dlgState=null; $('fade').style.opacity='0';
-  $('radio').hidden=true; $('toast').hidden=true; waiters.length=0;
+  $('radio').hidden=true; $('toast').hidden=true; waiters.length=0; $('backdrop').hidden=true; S.backdrop=null;
   const ch=G.chapters[id]; S.chapterId=id; S.chapterTitle=ch.title;
   Object.assign(S,{ mode:'play', locked:false, flags:{}, photos:{}, warnings:0, alerts:0, time:0, objective:'', timer:null, hooks:null, labels:[], photoEnabled:false, camTarget:null, alarmT:0, camLoopT:0, coins:undefined, coinsFly:[], coinsFloor:[], allowHide:true, zonesArmed:false, maxSusp:0, showJoyHint:false });
   S.player = makeEntity('vito',{x:2,y:2,angle:0}); S.player.crouch=false;

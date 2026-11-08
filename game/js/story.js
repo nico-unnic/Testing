@@ -79,6 +79,7 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
       if (id==='monitores') api.radio('speedy','¿Has entrado en la sala de control? ¿Tú estás loco? Bien. Bien hecho. Loco.',4);
     },
     onMap(id){
+      if (id!=='sotano' && !st.ritual) api.clearTimer();
       if (id==='planta0'){
         api.spawn('marcel',{at:'marcel', role:'staff', angle:PI/2, range:6, fov:0.6, showName:true, idleLook:{base:PI/2, speed:0.5, th:0.55, alt:-2.2}});
         api.spawn('jansen',{at:'jansen', role:'staff', angle:-PI/2, range:6.5, fov:0.7, showName:true, idleLook:{base:-PI/2, speed:0.6, th:0.5, alt:1.0}});
@@ -94,7 +95,8 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
         api.interact({id:'elev4', x:2,y:6.2, r:1.6, label:'Bajar a la planta baja', fn:()=>catchAbort(api.travel('planta0','elevator',{sfx:'elevator'}))});
         api.interact({id:'peeters', x:4.5,y:10.5, r:2.2, label:'Hablar con la Sra. Peeters', fn:()=>catchAbort(talkPeeters())});
         if (!st.phoneDone){
-          api.trigger({rect:[12,10,18,12], fn:()=>{ S.flags.phoneRinging=true; ring(); }});
+          api.objective('Entra en tu oficina: la 4.07, en el pasillo.');
+          api.trigger({rect:[12,10,18,12], fn:()=>{ S.flags.phoneRinging=true; ring(); api.objective('Está sonando el teléfono. Cógelo.'); }});
           api.interact({id:'phone', x:15.5,y:11.4, r:1.5, label:'Coger el teléfono', cond:()=>S.flags.phoneRinging, fn:()=>catchAbort(phone())});
         }
       }
@@ -107,8 +109,9 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
           api.spawn('marcel',{at:'stairs', role:'staff', range:6, fov:0.6, showName:true, angle:PI/2});
           catchAbort((async()=>{ await api.moveTo('marcel',13.2,7.5,2.2); const m=api.npc('marcel'); if (m){ m.idleLook={base:0.2, speed:0.5, th:0.55, alt:PI}; } })());
         }
-        if (st.ritualDone && !P.keyPhoto){ st.ritual=false; st.ritualDone=false; st.inBasement=0; S.flags.keyOnHook=true; api.toast('Al día siguiente vuelves al sótano un poco antes de las 18:00.',4); }
-        if (!st.ritual){ const t0=S.time||0; api.trigger({fn2:()=>(S.time||0)-t0>8, fn:()=>catchAbort(ritual())}); }
+        if (st.ritualDone && !P.keyPhoto){ st.ritual=false; st.ritualDone=false; S.flags.keyOnHook=true; }
+        if (S.timer && !st.ritual){ api.clearTimer(); }
+        if (!st.ritual) scheduleRitual(12);
       }
     },
   });
@@ -119,14 +122,14 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
       await api.say('marcel','Buenos días. ¿El señor…?');
       await api.say('vito','Sala. Vito Sala. Oficina 4.07.');
       await api.say('marcel','¡El italiano! Le esperaba. Aquí tiene su tarjeta de acceso. ¿Le gusta el fútbol, señor Sala?');
-      const c=await api.say('vito','(Marcel espera una respuesta.)',['«Soy del Torino. Sufrir es lo mío.»','«No tengo tiempo para el fútbol.»','«¿Y usted de qué equipo es?»']);
+      const c=await api.say('narrator','¿Qué le contestas?',['«Soy del Torino. Sufrir es lo mío.»','«No tengo tiempo para el fútbol.»','«¿Y usted de qué equipo es?»']);
       if (c===0){ P.trust=1; await api.say('marcel','¡Ja! Un hombre que sabe sufrir. Nos vamos a llevar bien, señor Sala.'); }
       else if (c===1){ P.trust=-1; await api.say('marcel','Ah. Bien. Cuarta planta. Ascensor al fondo.'); }
       else { P.trust=1; P.knowsVerbeke=true;
         await api.say('marcel','¡Del Antwerp! Desde niño. El club más antiguo de Bélgica, ¿sabe? Mi padre me llevaba al Bosuil cuando…');
         await api.say('narrator','(Diez minutos después.)');
         await api.say('marcel','…y por eso no confío en los porteros altos. En fin. Yo me voy a las seis. A partir de ahí esto es cosa de Verbeke, y ese no habla con nadie.'); }
-      await api.say('marcel','Las cajas del sótano se visitan hasta las seis. Si necesita algo, aquí estoy.');
+      await api.say('marcel','Las cajas del sótano se visitan hasta las seis. A las seis en punto baja Verbeke a cerrar la cámara: no se le escapa ni un minuto. Si necesita algo, aquí estoy.');
       st.met=true; api.objective('Sube a tu oficina: la 4.07. El ascensor está al fondo del vestíbulo.');
     } else {
       const lines = P.trust>0 ? ['¿Qué tal la oficina, señor Sala? Sin ventanas, ¿eh? Como en el Bosuil en los ochenta.','Verbeke baja a cerrar la cámara a las seis en punto. Ni un minuto más. Como un reloj suizo, pero belga.']
@@ -150,9 +153,9 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
     S.flags.phoneRinging=false; api.lock(); api.sfx('click');
     await api.say('speedy','¿Ya estás dentro? ¿Cómo es? ¿Tiene ventanas? Yo no podría trabajar sin ventanas.');
     await api.say('vito','Pietro. Céntrate.');
-    await api.say('speedy','Vale, vale. El Genio dice que necesita fotos. Todas las que puedas: cámaras, sensores, cerraduras. Todo.');
+    await api.say('speedy','Vale, vale. Elio, el Genio, dice que necesita fotos. Todas las que puedas: cámaras, sensores, cerraduras. Todo.');
     await api.say('vito','Ya lo sé.');
-    await api.say('speedy','Y que no te pillen haciéndolas. Elio dice que eso lo pongas en mayúsculas.');
+    await api.say('speedy','Y que no te pillen haciéndolas. Eso lo ha dicho dos veces.');
     st.phoneDone=true; api.unInteract('phone'); api.setPhoto(true); api.lock(false);
     api.toast('Nuevo: botón FOTO (tecla F). Mira hacia algo de la seguridad y dispara. Si alguien te ve hacerlo, sospechará.',6);
     objPhotos();
@@ -166,6 +169,7 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
     }
     await api.travel('sotano','stairs');
   }
+  function scheduleRitual(secs){ api.timer('RELOJ 17:58 · VERBEKE BAJA EN',secs,()=>catchAbort(ritual())); }
   async function ritual(){
     if (st.ritual) return; st.ritual=true;
     api.toast('Son las 18:00. Pasos en la escalera: es Verbeke, que baja a cerrar la cámara. Fíjate en todo lo que hace.',5); api.sfx('heavyStep');
@@ -182,17 +186,19 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
     S.flags.photo_key=false;
     await api.moveTo('verbeke','stairs'); api.remove('verbeke'); api.sfx('door');
     st.ritualDone=true;
-    if (!P.keyPhoto) api.toast('Verbeke ha dejado algo en el almacén antes de irse. Si sales del sótano y vuelves, mañana repetirá la ronda.',5);
+    if (!P.keyPhoto && S.mapId==='sotano'){ api.toast('Verbeke ha dejado algo en el almacén. Mañana a las 18:00 lo repetirá: esta vez, míralo desde dentro.',5);
+      await api.wait(6); if (S.mapId==='sotano' && !P.keyPhoto){ st.ritual=false; st.ritualDone=false; S.flags.keyOnHook=true; api.toast('Al día siguiente, a las 17:58, vuelves a estar en el sótano.',4); scheduleRitual(10); } }
   }
   async function meeting(){
     api.lock(); await api.fade(true);
     G.P.photos={}; for (const [k,v] of Object.entries(S.photos)) G.P.photos[k]=v; G.saveProgress();
     await api.illus('meeting','Esa noche · un piso alquilado','Los cinco alrededor de la mesa. Las fotos de Vito, extendidas entre ceniceros y cajas de pizza.');
-    await api.fade(false);
+    api.backdrop('meeting'); await api.fade(false);
     const n=nStatic();
     await api.say('elio', n>=5 ? 'Térmico, luz, magnético… Esto es de juguete. Dadme laca, cinta y una placa de aluminio.' : 'Bien. Pero me faltan fotos, Vito. Lo que no veo, me lo invento. Y yo no me invento cosas.');
     await api.say('aldo','La llave es otra cosa. Una llave así no se copia de una foto.');
-    await api.say('bruno', P.keyPhoto ? '(Bruno coge la foto del almacén y la deja en el centro de la mesa.)' : '(Bruno no dice nada. Mira a Vito.)');
+    if (P.keyPhoto){ await api.say('bruno','(Coge la foto del almacén y la deja en el centro de la mesa.)'); await api.say('bruno','Un trastero.'); }
+    else await api.say('bruno','(No dice nada. Mira a Vito.)');
     await api.say('speedy','(Con la boca llena.) ¿Y si la cogemos y ya está?');
     await api.say('vito','Si una mañana falta la llave, cambian la cerradura. Y nos quedamos sin golpe.');
     if (P.keyPhoto) await api.say('aldo','Pero si la tengo en la mano un minuto… saco un molde. Y vuelve al gancho antes de que nadie la eche de menos.');
@@ -200,9 +206,9 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
     const opts=['«Elio, mete tu cámara.» · Plan: microcámara'];
     if (P.keyPhoto) opts.push('«Aldo, prepara el molde.» · Plan: molde');
     else await api.say('vito','(Sin saber dónde guardan la llave, solo queda el plan de Elio.)');
-    const c=await api.say('vito','(Todos te miran.)',opts);
+    const c=await api.say('narrator','Todos miran a Vito. ¿Qué plan eliges?',opts);
     P.plan = c===1 ? 'mold' : 'cam';
-    await api.say(c===1?'aldo':'elio', c===1 ? 'Un minuto. Es todo lo que necesito.' : 'Me pondré guapo para la cámara.');
+    await api.say(c===1?'aldo':'elio', c===1 ? 'Un minuto. Es todo lo que necesito.' : 'Ya era hora de que alguien me hiciera caso.');
     P.stats.ch1={ photos:Object.keys(S.photos).length, warnings:S.warnings, trust:P.trust, time:Math.round(S.time||0) };
     G.unlock('ch2'); G.saveProgress();
     G.runChapter('ch2');
@@ -271,9 +277,9 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
       }
     },
   });
-  function done(line){ st.done=true; api.objective(objOut); api.radio('speedy',line,4); api.sfx('ok'); }
+  function done(line){ st.done=true; G.P.cp2=plan; G.saveProgress(); api.toast('Punto de control guardado.',2.5); api.objective(objOut); api.radio('speedy',line,4); api.sfx('ok'); }
   async function ending(){
-    api.lock(); await api.fade(true); await api.fade(false);
+    api.lock(); await api.fade(true); api.backdrop('car'); await api.fade(false);
     S.flags.vitoHidden=true;
     await api.say('speedy','(En el coche, comiendo.) ¿Ves? Fácil.');
     await api.say('vito','Tira eso. Me estás llenando el coche de migas.');
@@ -282,15 +288,18 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
     P.stats.ch2={ time:Math.round(S.time||0), alerts:S.alerts||0, plan };
     G.saveProgress();
     await api.fade(true);
+    api.backdrop(null);
     await api.card('Continuará','Capítulo 3 · La réplica','La banda construye una copia exacta de la cámara en un almacén de las afueras para ensayar el golpe.',2.6);
     G.showEnd();
   }
+  if (!opts.retry) G.P.cp2=null;
+  if (opts.retry && G.P.cp2===plan){ st.done=true; S.coins=3; api.loadMap('planta0',{night:true, spawn:'emergencyIn', angle:PI/2}); S.darkness=0.8; api.objective(objOut); return; }
   api.loadMap('planta0',{night:true, spawn:'garage', angle:PI});
   S.darkness=0.8;
   api.objective(objMain);
   await api.wait(0.6);
   api.radio('speedy','Vale. Vale. Estoy aquí. Si pasa algo, toco el claxon. No, no toco el claxon. No sé qué hago.',5);
-  catchAbort((async()=>{ await api.wait(6); api.toast('Corre solo si hace falta: de noche se oyen los pasos. Agáchate cerca de los vigilantes.',5); })());
+  catchAbort((async()=>{ await api.wait(6); api.toast('De noche se oyen los pasos: corre solo si hace falta. Botón MONEDA (tecla Q): lánzala hacia donde miras y el vigilante irá a ver qué ha sido.',6); })());
 }};
 
 G.chapterOrder=['prologue','ch1','ch2'];

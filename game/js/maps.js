@@ -107,7 +107,7 @@ MAPS.sotano = () => build(28,16,(g,P)=>{
   P('crate',6,8,{opaque:true}); P('crate',12,6,{opaque:true}); P('cabinet',8,8,{opaque:true,hide:true});
   P('cabinet',16,12,{opaque:true,hide:true});
   return { name:'Sótano −2',
-    spots:{ stairs:{x:4.4,y:1.7}, corrW:{x:2.5,y:7}, storageOut:{x:4.5,y:7.3}, storageIn:{x:4.5,y:10.7}, anteDoor:{x:14.5,y:7.5}, anteIn:{x:17.2,y:7.5},
+    spots:{ stairs:{x:4.5,y:2.6}, corrW:{x:2.5,y:7}, storageOut:{x:4.5,y:7.3}, storageIn:{x:4.5,y:10.7}, anteDoor:{x:14.5,y:7.5}, anteIn:{x:17.2,y:7.5},
       vaultFront:{x:25,y:7.5}, keyhook:{x:2.5,y:10.4}, verbekeDesk:{x:10,y:7.3}, smoke:{x:21.5,y:5.2}, corrMid:{x:8,y:7} },
     restricted:[{x0:1,y0:10,x1:6,y1:14,out:'storageOut',name:'el almacén'}],
     zones:[{id:'heat',x0:20,y0:3,x1:20,y1:12,label:'SENSOR TÉRMICO'},{id:'light',x0:23,y0:3,x1:23,y1:12,label:'SENSOR DE LUZ'}],
