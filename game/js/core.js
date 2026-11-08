@@ -137,6 +137,7 @@ addEventListener('keydown',e=>{
   if (k==='enter') I.handlers.advance&&I.handlers.advance();
   if (k==='c') I.handlers.crouch&&I.handlers.crouch();
   if (k==='f') I.handlers.photo&&I.handlers.photo();
+  if (k==='q') I.handlers.coin&&I.handlers.coin();
   if (k==='escape') I.handlers.pause&&I.handlers.pause();
   if (k>='1'&&k<='4') I.handlers.choice&&I.handlers.choice(+k-1);
 });

@@ -35,7 +35,7 @@ G.unlock=id=>{ if(!G.P.unlocked.includes(id)) G.P.unlocked.push(id); G.saveProgr
 function resize(){
   dpr=Math.min(S.night?1.5:2,window.devicePixelRatio||1); vw=innerWidth; vh=innerHeight;
   cv.width=Math.round(vw*dpr); cv.height=Math.round(vh*dpr);
-  ts=G.clamp(Math.floor(Math.min(vw/13.5, vh/7.6)),34,72);
+  ts=G.clamp(Math.floor(Math.min(vw/15, vh/8.4)),32,68);
   const portrait = vh>vw*1.05 && matchMedia('(pointer:coarse)').matches;
   $('rotate').hidden=!portrait;
   if (S.mode==='title'){ const tc=$('titleCv'); if(!tc.hidden){ tc.width=innerWidth*dpr; tc.height=innerHeight*dpr; R.illusFallback(tc,'keyart',0); } }
@@ -110,10 +110,10 @@ function update(dt){
       const ox=p.x, oy=p.y;
       const canX=freeAt(p.x+mv.x*st,p.y)&&!blockedByNpc(p.x+mv.x*st,p.y);
       if (canX) p.x+=mv.x*st;
-      else if (Math.abs(mv.x)>0.5){ const cy=Math.floor(p.y)+0.5, d=cy-p.y; if (Math.abs(d)>0.01){ const ny=p.y+Math.sign(d)*Math.min(Math.abs(d),st); if (freeAt(p.x,ny)) p.y=ny; } }
+      else if (Math.abs(mv.x)>0.5 && Math.abs(mv.y)<0.35){ const cy=Math.floor(p.y)+0.5, d=cy-p.y; if (Math.abs(d)>0.01){ const ny=p.y+Math.sign(d)*Math.min(Math.abs(d),st); if (freeAt(p.x,ny)) p.y=ny; } }
       const canY=freeAt(p.x,p.y+mv.y*st)&&!blockedByNpc(p.x,p.y+mv.y*st);
       if (canY) p.y+=mv.y*st;
-      else if (Math.abs(mv.y)>0.5){ const cx=Math.floor(p.x)+0.5, d=cx-p.x; if (Math.abs(d)>0.01){ const nx=p.x+Math.sign(d)*Math.min(Math.abs(d),st); if (freeAt(nx,p.y)) p.x=nx; } }
+      else if (Math.abs(mv.y)>0.5 && Math.abs(mv.x)<0.35){ const cx=Math.floor(p.x)+0.5, d=cx-p.x; if (Math.abs(d)>0.01){ const nx=p.x+Math.sign(d)*Math.min(Math.abs(d),st); if (freeAt(nx,p.y)) p.x=nx; } }
       p.angle=Math.atan2(mv.y,mv.x);
       if (Math.hypot(p.x-ox,p.y-oy)>0.0005){ p.moving=true; p.running=running; p.phase+=dt*sp*3.2;
         S.stepT=(S.stepT||0)-dt; if (S.stepT<=0){ S.stepT=running?0.27:p.crouch?0.6:0.4; A.sfx(running?'stepRun':'step');
@@ -137,6 +137,10 @@ function update(dt){
   for (const e of S.npcs.slice()) updateNpc(e,dt);
   for (const c of S.cams) updateCam(c,dt);
   // Temporizador
+  if (S.alarmT>0){ S.alarmT-=dt; if (S.alarmT<=0) for (const g of S.npcs) if (g.speedBase){ g.speed=g.speedBase; } }
+  if (S.camLoopT>0) S.camLoopT-=dt;
+  for (const c of S.coinsFly||[]){ c.t+=dt/0.5; if (c.t>=1){ noise(c.tx,c.ty,5.5); (S.coinsFloor=S.coinsFloor||[]).push({x:c.tx,y:c.ty}); } }
+  if (S.coinsFly) S.coinsFly=S.coinsFly.filter(c=>c.t<1);
   if (S.timer){ S.timer.left-=dt; if (S.timer.left<=0){ const f=S.timer.onEnd; S.timer=null; f&&f(); } }
   if (S.toastT>0){ S.toastT-=dt; if (S.toastT<=0) $('toast').hidden=true; }
   if (S.radioT>0){ S.radioT-=dt; if (S.radioT<=0) $('radio').hidden=true; }
@@ -168,23 +172,34 @@ function updateNpc(e,dt){
     if (e.state==='patrol'||e.state==='investigate'){
       const rush=e.state==='investigate';
       if (follow(e,rush?e.speed*1.45:e.speed,dt)){ turn(e,e.moveAngle,rush?8:6,dt); e.moving=true; e.phase+=dt*e.speed*3; }
-      if (!e.path.length){ if (rush){ e.state='look'; e.timer=2.8; } else { e.state='wait'; const w=e.wps[e.wi]; e.timer=w[2]||1; if (w[3]!==undefined) e.faceTo=w[3]; } e.base=e.faceTo!==undefined?e.faceTo:e.angle; e.faceTo=undefined; e.look=0; }
+      if (!e.path.length){ if (rush && e.checkCab){ const cab=e.checkCab; e.checkCab=null; e.angle=Math.atan2(cab.y+0.5-e.y,cab.x+0.5-e.x);
+            if (S.player.hidden===cab) return G.fail((e.caughtLine||'Te han encontrado.').replace(/ te ha visto\./,' ha abierto el armario.'),'caught');
+            A.sfx('door'); }
+          if (rush){ e.state='look'; e.timer=2.4; e.searchLeft = e.searchLeft===undefined ? 2 : e.searchLeft; } else { e.state='wait'; const w=e.wps[e.wi]; e.timer=w[2]||1; if (w[3]!==undefined) e.faceTo=w[3]; } e.base=e.faceTo!==undefined?e.faceTo:e.angle; e.faceTo=undefined; e.look=0; }
     } else if (e.state==='wait'){
       e.timer-=dt; turn(e,e.base+Math.sin(e.look*1.4)*(e.lookAmp||0.6),4,dt);
       if (e.timer<=0){ e.wi=(e.wi+1)%e.wps.length; const w=e.wps[e.wi]; e.path=pathTo(e,w[0]+0.5,w[1]+0.5); e.state='patrol'; }
     } else if (e.state==='look'){
       e.timer-=dt; e.angle=e.base+Math.sin(e.look*2.2)*1.1;
-      if (e.timer<=0){ const w=e.wps[e.wi]; e.path=pathTo(e,w[0]+0.5,w[1]+0.5); e.state='patrol'; }
+      if (e.timer<=0){
+        if (e.searchLeft>0 && e.role==='guard'){ e.searchLeft--; const g=S.map.grid; let pt=null;
+          for (let k=0;k<20&&!pt;k++){ const tx=Math.floor(e.x+(Math.random()*6-3)), ty=Math.floor(e.y+(Math.random()*6-3)); if (g.walk(tx,ty) && G.los(g,e.x,e.y,tx+0.5,ty+0.5)) pt=[tx+0.5,ty+0.5]; }
+          if (pt){ e.path=pathTo(e,pt[0],pt[1]); e.state='investigate'; e.searching=true; return; } }
+        e.searchLeft=undefined; e.searching=false; const w=e.wps[e.wi]; e.path=pathTo(e,w[0]+0.5,w[1]+0.5); e.state='patrol'; }
     }
   } else if (e.idleLook){
     const L=e.idleLook; e.angle = L.base + (Math.sin(e.look*(L.speed||0.5))>L.th ? L.alt : Math.sin(e.look*1.3)*0.25);
   }
   // Percepción
   if (e.role==='guard' && S.night){
-    const s=sees(e,e.range,e.fov);
+    const alarm=S.alarmT>0, R0=e.range*(alarm?1.15:1);
+    if (e.watchHook && S.flags.hasKey && S.map){ const h=e.watchHook, d=Math.hypot(h.x-e.x,h.y-e.y);
+      if (d<R0 && Math.abs(G.angDiff(Math.atan2(h.y-e.y,h.x-e.x),e.angle))<e.fov && G.los(S.map.grid,e.x,e.y,h.x,h.y)) return G.fail('Verbeke ha mirado el gancho del almacén y estaba vacío. Mañana cambiarán la cerradura.','time'); }
+    const s=sees(e,R0,e.fov);
     if (s>0){ e.susp=Math.min(1,e.susp+dt*(0.8+2.4*s)*(S.player.crouch?0.65:1)); e.retarget=(e.retarget||0)-dt;
       if (e.susp>0.3 && e.retarget<=0 && !e.scripted){ e.path=pathTo(e,S.player.x,S.player.y); e.state='investigate'; e.retarget=0.4; }
-      if (e.susp>0.3 && !e.alerted){ e.alerted=true; S.alerts=(S.alerts||0)+1; A.sfx('alert'); S.hooks&&S.hooks.onAlert&&S.hooks.onAlert(e); } }
+      if (e.susp>0.3 && !e.alerted){ e.alerted=true; S.alerts=(S.alerts||0)+1; A.sfx('alert'); S.hooks&&S.hooks.onAlert&&S.hooks.onAlert(e); }
+      if (e.susp>0.62 && !(S.alarmT>0)) raiseAlarm(e); }
     else { e.susp=Math.max(0,e.susp-dt*0.3); if (e.susp===0 && e.state!=='investigate') e.alerted=false; }
     if (e.susp>=1) return G.fail(e.caughtLine||'Te han visto.');
   } else if (e.role==='staff' && !S.locked){
@@ -197,7 +212,7 @@ function updateNpc(e,dt){
   S.maxSusp=Math.max(S.maxSusp,e.susp);
 }
 function updateCam(c,dt){
-  c.t+=dt; c.angle=(c.a0+(c.a1-c.a0)*(0.5+0.5*Math.sin(c.t*0.5)))*Math.PI/180;
+  c.off = S.camLoopT>0; c.t+=dt; if (c.off){ c.susp=Math.max(0,c.susp-dt); const pr=S.map.props.find(q=>q.id===c.id); if(pr){pr.off=true;} return; } else { const pr=S.map.props.find(q=>q.id===c.id); if(pr) pr.off=false; } c.angle=(c.a0+(c.a1-c.a0)*(0.5+0.5*Math.sin(c.t*0.5)))*Math.PI/180;
   const pr=S.map.props.find(q=>q.id===c.id); if (pr){ pr.angle=c.angle; pr.alarm=c.susp>0.35; }
   const p=S.player; let s=0;
   if (!p.hidden){ const dx=p.x-c.x, dy=p.y-c.y, d=Math.hypot(dx,dy), Rr=c.range*(p.crouch?0.8:1);
@@ -205,11 +220,14 @@ function updateCam(c,dt){
   c.call-=dt;
   if (s>0){ c.susp=Math.min(1,c.susp+dt*(0.55+1.4*s));
     if (c.susp>0.4 && c.call<=0){ const g=S.npcs.filter(e=>e.role==='guard'&&!e.scripted).sort((a,b)=>G.dist(a,p)-G.dist(b,p))[0];
-      if (g){ g.path=pathTo(g,p.x,p.y); g.state='investigate'; } c.call=1.5; if(!c.alerted){c.alerted=true;S.alerts=(S.alerts||0)+1;A.sfx('alert');} } }
+      if (g){ g.path=pathTo(g,p.x,p.y); g.state='investigate'; } c.call=1.5; if(!c.alerted){c.alerted=true;S.alerts=(S.alerts||0)+1;A.sfx('alert');} if (c.susp>0.7 && !(S.alarmT>0)) raiseAlarm(null); } }
   else { c.susp=Math.max(0,c.susp-dt*0.4); if (c.susp===0) c.alerted=false; }
   S.maxSusp=Math.max(S.maxSusp,c.susp);
   if (c.susp>=1) G.fail('La cámara del vestíbulo te ha grabado. Dirk ya está llamando a la policía.');
 }
+function raiseAlarm(e){ S.alarmT=22; S.alarmBy=e?G.CHARS[e.char].name:'La cámara'; A.sfx('alert');
+  for (const g of S.npcs) if (g.role==='guard' && g!==e && !g.scripted){ g.speedBase=g.speedBase||g.speed; g.speed=g.speedBase*1.2; } }
+G.raiseAlarm=raiseAlarm;
 function noise(x,y,r){
   S.rings=S.rings||[]; S.rings.push({x,y,r,t:0});
   for (const e of S.npcs){ if (e.role!=='guard'||e.scripted||e.visible===false) continue; const d=Math.hypot(e.x-x,e.y-y);
@@ -250,7 +268,9 @@ function currentAction(){
     if (d<bd){ bd=d; best=it; } }
   return best?{it:best}:null;
 }
-function hide(pr){ const p=S.player; p.prev={x:p.x,y:p.y}; p.hidden=pr; p.x=pr.x+0.5; p.y=pr.y+0.5; A.sfx('door'); }
+function hide(pr){ const p=S.player;
+  if (S.night) for (const e of S.npcs){ if (e.role!=='guard'||e.scripted) continue; if (sees(e,e.range*1.1,e.fov+0.15)>0 && e.susp>0.15){ e.checkCab=pr; e.path=pathTo(e,pr.x+0.5,pr.y+0.5); e.state='investigate'; e.susp=Math.max(e.susp,0.5); } }
+  p.prev={x:p.x,y:p.y}; p.hidden=pr; p.x=pr.x+0.5; p.y=pr.y+0.5; A.sfx('door'); }
 function unhide(){ const p=S.player; if (p.prev){ p.x=p.prev.x; p.y=p.prev.y; } p.hidden=null; A.sfx('door'); }
 function actDown(){
   if (S.mode==='cut') return advance();
@@ -264,6 +284,14 @@ function actDown(){
 function actUp(){ S.hold=null; }
 
 /* ---------- Fotos ---------- */
+function throwCoin(){
+  const p=S.player; if (S.mode!=='play'||S.locked||p.hidden||!S.night||!(S.coins>0)) return;
+  S.coins--; A.sfx('click');
+  const ca=Math.cos(p.angle), sa=Math.sin(p.angle); let r=0.4;
+  for (; r<5.5; r+=0.1){ if (!S.map.grid.walk(Math.floor(p.x+ca*r),Math.floor(p.y+sa*r))){ r-=0.25; break; } }
+  r=Math.max(0.6,r); (S.coinsFly=S.coinsFly||[]).push({sx:p.x,sy:p.y,tx:p.x+ca*r,ty:p.y+sa*r,t:0});
+}
+G.throwCoin=throwCoin;
 function takePhoto(){
   if (S.mode!=='play'||S.locked||!S.photoEnabled||S.player.hidden) return;
   A.sfx('flash'); const fl=$('flash'); fl.style.transition='none'; fl.style.opacity='0.85'; requestAnimationFrame(()=>{ fl.style.transition='opacity .5s'; fl.style.opacity='0'; });
@@ -274,7 +302,7 @@ function takePhoto(){
   for (const t of S.map.photos){ if (S.photos[t.id]) continue; if (t.hidden && !S.flags['photo_'+t.id]) continue;
     const dx=t.x-p.x, dy=t.y-p.y, d=Math.hypot(dx,dy); if (d>5.5) continue;
     const da=Math.abs(G.angDiff(Math.atan2(dy,dx),p.angle)); if (da>0.75) continue;
-    if (!G.los(S.map.grid,p.x,p.y,t.x,t.y) && d>2.3) continue;
+    if (!G.los(S.map.grid,p.x,p.y,t.lx!==undefined?t.lx:t.x,t.ly!==undefined?t.ly:t.y)) continue;
     const sc=d+da*3; if (sc<bs){ bs=sc; best=t; } }
   if (best){
     S.photos[best.id]={label:best.label, note:best.note, img:snapshot(best)};
@@ -324,10 +352,14 @@ function draw(t){
       const al = S.night ? (e.susp>0.3?0.22:0.08) : (e.susp>0.05?0.12+e.susp*0.2:0.07);
       ctx.fillStyle = e.susp>0.3 ? `rgba(239,75,75,${al+0.06})` : (S.night?`rgba(255,230,160,${al})`:`rgba(255,255,255,${al})`);
       ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(const q of pts) ctx.lineTo(q[0],q[1]); ctx.closePath(); ctx.fill(); } }
-  for (const c of S.cams){ const pts=G.cone(g,c.x,c.y,c.angle,c.half,c.range*(S.player.crouch?0.8:1),18);
+  for (const c of S.cams){ if (c.off) continue; const pts=G.cone(g,c.x,c.y,c.angle,c.half,c.range*(S.player.crouch?0.8:1),18);
     ctx.fillStyle=c.susp>0.4?`rgba(239,75,75,${0.18+c.susp*0.2})`:`rgba(170,200,255,${0.1+c.susp*0.2})`; ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(const q of pts) ctx.lineTo(q[0],q[1]); ctx.closePath(); ctx.fill(); }
+  for (const c of S.coinsFloor||[]){ ctx.fillStyle='#d9b25a'; ctx.beginPath(); ctx.arc(c.x,c.y,0.07,0,7); ctx.fill(); }
+  for (const c of S.coinsFly||[]){ const x=c.sx+(c.tx-c.sx)*c.t, y=c.sy+(c.ty-c.sy)*c.t-Math.sin(c.t*Math.PI)*0.8; ctx.fillStyle='#f6d27a'; ctx.beginPath(); ctx.arc(x,y,0.09,0,7); ctx.fill(); }
+  // rutas de los vigilantes (de noche)
+  if (S.night) for (const e of S.npcs){ if (e.role!=='guard'||!e.path||!e.path.length||e.visible===false) continue; ctx.strokeStyle=e.state==='investigate'?'rgba(239,75,75,.35)':'rgba(255,230,160,.22)'; ctx.lineWidth=0.05; ctx.setLineDash([0.12,0.18]); ctx.beginPath(); ctx.moveTo(e.x,e.y); for (const n of e.path) ctx.lineTo(n.x,n.y); ctx.stroke(); ctx.setLineDash([]); }
   // anillos de ruido
-  if (S.rings){ for (const r of S.rings){ r.t+=1/60; ctx.strokeStyle=`rgba(233,228,214,${0.45*(1-r.t/0.7)})`; ctx.lineWidth=0.04; ctx.beginPath(); ctx.arc(r.x,r.y,r.r*(r.t/0.7),0,7); ctx.stroke(); } S.rings=S.rings.filter(r=>r.t<0.7); }
+  if (S.rings){ for (const r of S.rings){ r.t+=1/60; ctx.strokeStyle=`rgba(242,179,61,${0.6*(1-r.t/0.7)})`; ctx.lineWidth=0.06; ctx.beginPath(); ctx.arc(r.x,r.y,r.r*(r.t/0.7),0,7); ctx.stroke(); } S.rings=S.rings.filter(r=>r.t<0.7); }
   // personajes (orden por y)
   const people=S.npcs.filter(e=>e.visible!==false).concat(p.hidden?[]:[p]).sort((a,b)=>a.y-b.y);
   for (const e of people){ if (e===p && S.flags.vitoHidden) continue; R.person(ctx,e,t); }
@@ -363,7 +395,9 @@ function hud(){
   $('suspRow').style.visibility=showSusp?'visible':'hidden';
   const b=$('suspBar'); b.style.width=(S.maxSusp*100)+'%'; b.classList.toggle('hot',S.maxSusp>0.55);
   const wc=$('warnChip'); wc.hidden=!(S.warnings>0 && !S.night); wc.textContent=`ADVERTENCIAS ${S.warnings}/3`;
-  const tc=$('timeChip'); tc.hidden=!S.timer; if (S.timer) tc.textContent=`${S.timer.label} ${Math.ceil(S.timer.left)} s`;
+  const tc=$('timeChip'); const chipT = S.timer ? `${S.timer.label} ${Math.ceil(S.timer.left)} s` : S.alarmT>0 ? `ALERTA · ${S.alarmBy} ha avisado por radio` : S.camLoopT>0 ? `CÁMARA EN BUCLE ${Math.ceil(S.camLoopT)} s` : S.flags.hasKey ? 'EL GANCHO ESTÁ VACÍO' : '';
+  tc.hidden=!chipT; tc.textContent=chipT; tc.classList.toggle('warn',S.alarmT>0||!!S.flags.hasKey);
+  const cb2=$('coinBtn'); cb2.hidden=!(S.night && S.coins!==undefined); $('coinN').textContent=S.coins||0; cb2.disabled=!(S.coins>0);
   $('topRight').hidden=!play; $('photoCount').textContent=Object.keys(S.photos).length;
   $('pad').hidden=!play;
   $('photoBtn').hidden=!S.photoEnabled;
@@ -475,9 +509,9 @@ $('pauseBtn').addEventListener('click',openPause);
 const TIPS = {
   caught:'Agáchate cuando estés cerca de un vigilante: te ven a menos distancia y no haces ruido. Correr se oye desde lejos.',
   camera:'La cámara gira de lado a lado. Espera a que mire hacia el otro lado, o pásala por detrás de una columna.',
-  alarm:'Las franjas rojas son los campos de los sensores. Esta noche no hace falta cruzarlas.',
+  alarm:'Las franjas rojas son los campos de los sensores. El térmico se ciega con la laca de Elio desde el lado de la puerta.',
   cover:'Las zonas con borde rojo son privadas. Entra solo cuando nadie mire hacia ti, y no hagas fotos delante de nadie.',
-  time:'Ve directo: coge la llave, haz el molde fuera del almacén y devuélvela antes de que vuelva el vigilante.',
+  time:'Verbeke mira el gancho del almacén en cada ronda (su ruta se ve en el suelo). Coge la llave justo después de que pase y devuélvela antes de que vuelva.',
 };
 G.fail = function(reason,kind){
   if (S.mode==='fail') return; const tk=G.token; G.token++; S.mode='fail'; S.locked=true; S.hold=null; S.redFlash=1; A.sfx('caught'); A.ambient(null);
@@ -531,7 +565,7 @@ G.runChapter = async function(id,opts={}){
   closeSheet(); $('title').hidden=true; $('card').hidden=true; $('illus').hidden=true; $('dlg').hidden=true; dlgState=null; $('fade').style.opacity='0';
   $('radio').hidden=true; $('toast').hidden=true; waiters.length=0;
   const ch=G.chapters[id]; S.chapterId=id; S.chapterTitle=ch.title;
-  Object.assign(S,{ mode:'play', locked:false, flags:{}, photos:{}, warnings:0, alerts:0, time:0, objective:'', timer:null, hooks:null, labels:[], photoEnabled:false, camTarget:null, allowHide:true, zonesArmed:false, maxSusp:0, showJoyHint:false });
+  Object.assign(S,{ mode:'play', locked:false, flags:{}, photos:{}, warnings:0, alerts:0, time:0, objective:'', timer:null, hooks:null, labels:[], photoEnabled:false, camTarget:null, alarmT:0, camLoopT:0, coins:undefined, coinsFly:[], coinsFloor:[], allowHide:true, zonesArmed:false, maxSusp:0, showJoyHint:false });
   S.player = makeEntity('vito',{x:2,y:2,angle:0}); S.player.crouch=false;
   G.unlock(id); G.P.last=id; G.saveProgress();
   try { await ch.run(api,opts); }
@@ -572,6 +606,8 @@ ab.addEventListener('pointerdown',e=>{ e.preventDefault(); G.audio.init(); try{a
 ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>ab.addEventListener(ev,actUp));
 $('crouchBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); I.handlers.crouch(); });
 $('photoBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); takePhoto(); });
+$('coinBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); throwCoin(); });
+I.handlers.coin=throwCoin;
 
 /* ---------- Arranque ---------- */
 G.boot = function(){

@@ -141,6 +141,7 @@ R.prop = function(ctx,p,t,S){
     case 'bench': shadow(ctx,x,y,w,h); box(ctx,x+0.05,y+0.2,w-0.1,h-0.4,'#5b4a38','#3c3126',0.12); break;
     case 'floorlogo': { const cx=x+w/2, cy=y+h/2; ctx.strokeStyle='rgba(201,164,90,.55)'; ctx.lineWidth=0.06; ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)/2-0.2,0,7); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx,cy-0.9); ctx.lineTo(cx+0.75,cy-0.2); ctx.lineTo(cx,cy+0.95); ctx.lineTo(cx-0.75,cy-0.2); ctx.closePath(); ctx.moveTo(cx-0.75,cy-0.2); ctx.lineTo(cx+0.75,cy-0.2); ctx.stroke(); break; }
+    case 'fusebox': ctx.fillStyle='#4b4f5c'; ctx.fillRect(x+0.2,y+0.45,0.6,0.5); ctx.fillStyle=S.camLoopT>0?'#5cc98a':'#f2b33d'; ctx.fillRect(x+0.45,y+0.55,0.1,0.12); break;
     case 'sign': ctx.fillStyle='#202837'; ctx.fillRect(x+0.05,y+0.5,w-0.1,0.3); break;
   }
 };

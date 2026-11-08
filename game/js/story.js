@@ -80,8 +80,8 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
     },
     onMap(id){
       if (id==='planta0'){
-        api.spawn('marcel',{at:'marcel', role:'staff', angle:PI/2, range:6, fov:0.6, showName:true, idleLook:{base:PI/2, speed:0.33, th:0.8, alt:-2.2}});
-        api.spawn('jansen',{at:'jansen', role:'staff', angle:-PI/2, range:5, fov:0.7, showName:true, idleLook:{base:-PI/2, speed:0.42, th:0.72, alt:0.85}});
+        api.spawn('marcel',{at:'marcel', role:'staff', angle:PI/2, range:6, fov:0.6, showName:true, idleLook:{base:PI/2, speed:0.5, th:0.55, alt:-2.2}});
+        api.spawn('jansen',{at:'jansen', role:'staff', angle:-PI/2, range:6.5, fov:0.7, showName:true, idleLook:{base:-PI/2, speed:0.6, th:0.5, alt:1.0}});
         api.spawn('luc',{at:{x:3.5,y:12.5}, role:'extra', speed:1.6, wps:[[3,12,2],[14,15,1.5],[19,10,2],[8,10,1]]});
         api.interact({id:'marcel', x:10.5,y:11.6, r:2.5, label:()=>st.met?'Hablar con Marcel':'Presentarte', fn:()=>catchAbort(talkMarcel())});
         api.interact({id:'elev', x:19,y:1.2, r:1.7, label:'Subir a la 4ª planta', locked:()=>!st.met, lockedMsg:'Antes de subir, preséntate en recepción.', fn:()=>catchAbort(api.travel('planta4','elevator',{sfx:'elevator'}))});
@@ -107,7 +107,8 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
           api.spawn('marcel',{at:'stairs', role:'staff', range:6, fov:0.6, showName:true, angle:PI/2});
           catchAbort((async()=>{ await api.moveTo('marcel',13.2,7.5,2.2); const m=api.npc('marcel'); if (m){ m.idleLook={base:0.2, speed:0.5, th:0.55, alt:PI}; } })());
         }
-        if (!st.ritual) api.trigger({fn2:()=>{ st.inBasement+=1/60; return st.inBasement>9; }, fn:()=>catchAbort(ritual())});
+        if (st.ritualDone && !P.keyPhoto){ st.ritual=false; st.ritualDone=false; st.inBasement=0; S.flags.keyOnHook=true; api.toast('Al día siguiente vuelves al sótano un poco antes de las 18:00.',4); }
+        if (!st.ritual){ const t0=S.time||0; api.trigger({fn2:()=>(S.time||0)-t0>8, fn:()=>catchAbort(ritual())}); }
       }
     },
   });
@@ -167,7 +168,7 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
   }
   async function ritual(){
     if (st.ritual) return; st.ritual=true;
-    api.toast('Son las 18:00. Alguien baja por la escalera.',4); api.sfx('heavyStep');
+    api.toast('Son las 18:00. Pasos en la escalera: es Verbeke, que baja a cerrar la cámara. Fíjate en todo lo que hace.',5); api.sfx('heavyStep');
     S.flags.keyOnHook=false;
     api.spawn('verbeke',{at:'stairs', role:'staff', range:5.5, fov:0.6, speed:2.7, showName:true, angle:PI/2, carry:true});
     await api.moveTo('verbeke','vaultFront'); api.face('verbeke',0);
@@ -177,11 +178,11 @@ G.chapters.ch1 = { title:'Capítulo 1 · El inquilino', async run(api,opts={}){
     api.sfx('lockStuck');
     await api.moveTo('verbeke','keyhook'); api.face('verbeke',-PI/2);
     await api.wait(0.6); S.flags.keyOnHook=true; S.flags.photo_key=true; const v=api.npc('verbeke'); if (v) v.carry=false; api.sfx('click');
-    await api.wait(4.2);
+    await api.wait(6);
     S.flags.photo_key=false;
     await api.moveTo('verbeke','stairs'); api.remove('verbeke'); api.sfx('door');
     st.ritualDone=true;
-    if (!P.keyPhoto) api.toast('Verbeke ha dejado algo en el almacén antes de irse. ¿El qué?',4);
+    if (!P.keyPhoto) api.toast('Verbeke ha dejado algo en el almacén antes de irse. Si sales del sótano y vuelves, mañana repetirá la ronda.',5);
   }
   async function meeting(){
     api.lock(); await api.fade(true);
@@ -222,16 +223,25 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
     await api.illus('corridor','Turno de noche','Arriba, Dirk vigila el vestíbulo. Abajo, Verbeke hace la ronda solo. Speedy espera en el garaje con el motor apagado.');
   }
   labelsDay(api);
-  const st={ done:false, radioAlertT:0, ranTold:false, downTold:false };
-  const objMain = plan==='cam' ? 'Baja al sótano y esconde la microcámara en el detector de humo de la antesala.' : 'Baja al sótano y coge la llave del almacén. Saca un molde y devuélvela.';
+  const st={ done:false, radioAlertT:0, ranTold:false, downTold:false, loopTold:false };
+  S.coins=3;
+  const objMain = plan==='cam' ? 'Baja al sótano. Ciega el sensor térmico con la laca de Elio y esconde la microcámara en el detector de humo de la antesala.' : 'Baja al sótano y coge la llave del almacén. Saca un molde y devuélvela al gancho antes de que Verbeke pase a mirarlo.';
   const objOut = 'Hecho. Sube por la escalera, sal por la puerta de emergencia y vuelve al coche de Speedy, en el garaje.';
   api.hooks({
     onAlert(e,kind){ const now=S.time||0; if (now-st.radioAlertT>7){ st.radioAlertT=now; api.radio('speedy',kind==='noise'?'¿Eso eran pasos? ¿Tuyos? Vito, más despacio…':'Vito. Vito. Vito.',3.5); } },
     onMap(id){
       if (id==='planta0'){
         S.map.props.push({type:'emergency',x:26,y:8,w:1,h:1,solid:true}); S.map.grid.solid[S.map.grid.i(26,8)]=1;
-        api.spawn('dirk',{at:{x:11.5,y:14.5}, role:'guard', speed:1.75, flashlight:true, range:5, fov:0.58, angle:PI/2, caughtLine:'Dirk te ha visto. «¡Alto! ¡No se mueva!»',
+        if (!st.done) api.spawn('dirk',{at:{x:11.5,y:14.5}, role:'guard', speed:1.75, flashlight:true, range:5, fov:0.58, angle:PI/2, caughtLine:'Dirk te ha visto. «¡Alto! ¡No se mueva!»',
           wps:[[11,14,2.2,PI/2],[19,13,1.4],[18,9,3,-PI/2],[13,9,1.2],[6,9,2],[6,15,1.4],[13,17,1.5]]});
+        else { api.spawn('dirk',{at:{x:24.5,y:15.2}, role:'guard', speed:1.6, flashlight:true, range:5, fov:0.58, angle:0, caughtLine:'Dirk te ha visto en el garaje. «¡Alto!»',
+          wps:[[25,15,2,0],[31,14,2.5,PI/2],[30,11,1.5,PI],[24,10,2,PI/2]]});
+          if (!st.garageTold){ st.garageTold=true; api.radio('speedy','Vito… el vigilante de arriba está dando vueltas por el garaje. Yo me agacho. Ya estoy agachado.',5); } }
+        const loopOk = !!(G.P.photos && G.P.photos.monitores);
+        api.interact({id:'loop', x:24.5,y:9.6, r:1.3, label:loopOk?'Meter el bucle de Elio en la cámara':'Caja de conexiones', hold:loopOk?2.5:0,
+          cond:()=>!(S.camLoopT>0)&&!st.loopUsed, locked:()=>!loopOk, lockedMsg:'Caja de conexiones. Elio sabría qué cable tocar si le hubieras traído una foto de la sala de control.',
+          fn:()=>{ st.loopUsed=true; S.camLoopT=25; api.radio('elio','Bucle puesto. Durante 25 segundos, la cámara del vestíbulo ve un vestíbulo vacío. De nada.',4.5); }});
+        if (loopOk && !st.loopTold){ st.loopTold=true; catchAbort((async()=>{ await api.wait(7); api.radio('elio','Gracias a tu foto de la sala de control: en el pasillo de servicio hay una caja de conexiones. Puedo meter un bucle en la cámara. Una vez.',6); })()); }
         api.interact({id:'stairs', x:26.5,y:4.1, r:1.6, label:'Bajar al sótano', fn:()=>catchAbort(api.travel('sotano','stairs'))});
         api.interact({id:'emergIn', x:26,y:7.3, r:1.2, label:'Salir por la puerta de emergencia', fn:()=>{ api.sfx('door'); S.player.x=26; S.player.y=9.7; S.player.angle=PI/2; }});
         api.interact({id:'emergOut', x:26,y:9.7, r:1.1, label:'Puerta de emergencia', locked:()=>true, lockedMsg:'Solo se abre desde dentro.', fn:()=>{}});
@@ -240,21 +250,22 @@ G.chapters.ch2 = { title:'Capítulo 2 · La llave', async run(api,opts={}){
       }
       if (id==='sotano'){
         S.zonesArmed=true;
+        if (S.flags.off_heat){ const pr=S.map.props.find(q=>q.id==='heat'); if(pr) pr.armed=false; }
         api.interact({id:'stairsUp', x:2.6,y:2.6, r:1.6, label:'Subir a la planta baja', fn:()=>catchAbort(api.travel('planta0','stairs'))});
         api.spawn('verbeke',{at:{x:10.5,y:7.3}, role:'guard', speed:1.65, flashlight:true, range:5, fov:0.58, angle:-PI/2, caughtLine:'Verbeke te ha visto. «¡Quieto ahí!»',
-          wps:[[10,7,4,-PI/2],[14,7,2.5,0],[8,7,1],[4,8,2.6,PI/2],[2,7,1.5,PI]]});
+          wps:[[10,7,4,-PI/2],[14,7,2.5,0],[8,7,1],[4,10,2.2,PI-0.1],[2,7,1.5,PI]], watchHook:{x:2.5,y:10.15}});
         if (plan==='cam'){
-          api.interact({id:'smoke', x:17.5,y:4.6, r:1.6, label:'Colocar la microcámara', hold:3, cond:()=>!S.flags.microcam, fn:()=>{ S.flags.microcam=true; done('¡Bien! ¿Bien? Dime que bien.'); }});
+          api.interact({id:'laca', x:19.4,y:3.6, r:1.3, label:'Laca al sensor térmico', hold:2.5, cond:()=>!S.flags.off_heat, fn:()=>{ S.flags.off_heat=true; const pr=S.map.props.find(q=>q.id==='heat'); if(pr) pr.armed=false; api.radio('elio','¿Ves? Laca. Cuarenta años de ingeniería alemana y una laca de supermercado.',4.5); }});
+          api.interact({id:'smoke', x:21.5,y:4.7, r:1.5, label:'Colocar la microcámara', hold:3, cond:()=>!S.flags.microcam, fn:()=>{ S.flags.microcam=true; done('¡Bien! ¿Bien? Dime que bien.'); }});
         } else {
           S.flags.keyOnHook = !S.flags.hasKey;
           api.interact({id:'takeKey', x:2.5,y:10.2, r:1.3, label:'Coger la llave', hold:1, cond:()=>!S.flags.hasKey&&!S.flags.returned, fn:()=>{
             S.flags.hasKey=true; S.flags.keyOnHook=false; S.player.carry=true;
-            api.timer('VERBEKE VUELVE AL ALMACÉN EN',70,()=>G.fail('Verbeke ha pasado por el almacén y el gancho estaba vacío. Mañana cambiarán la cerradura.','time'));
-            api.objective('Saca el molde (mantén pulsado) y devuelve la llave al gancho antes de que vuelva Verbeke.');
+            api.objective('Saca el molde (mantén pulsado) y devuelve la llave al gancho. Verbeke mira el gancho en cada ronda.');
             api.radio('aldo','Con calma. La cera tiene que tocar todos los dientes. Cuatro segundos, ni uno menos.',4.5); }});
           api.interact({id:'mold', self:true, label:'Sacar el molde', hold:4, cond:()=>S.flags.hasKey&&!S.flags.molded, fn:()=>{ S.flags.molded=true; api.objective('Devuelve la llave al gancho del almacén. ¡Rápido!'); api.toast('Molde hecho. Ahora, la llave a su sitio.'); }});
           api.interact({id:'retKey', x:2.5,y:10.2, r:1.3, label:'Devolver la llave', hold:0.8, cond:()=>S.flags.hasKey&&S.flags.molded, fn:()=>{
-            S.flags.hasKey=false; S.flags.returned=true; S.flags.keyOnHook=true; S.player.carry=false; api.clearTimer(); done('¿Ya? ¿Ya está? ¡Aldo dice que te quiere!'); }});
+            S.flags.hasKey=false; S.flags.returned=true; S.flags.keyOnHook=true; S.player.carry=false; done('¿Ya? ¿Ya está? ¡Aldo dice que te quiere!'); }});
         }
         if (!st.downTold){ st.downTold=true; api.radio('speedy','Abajo hay cobertura de pena. Si no te oigo, es que estás bien. O no. No sé.',4.5); }
       }

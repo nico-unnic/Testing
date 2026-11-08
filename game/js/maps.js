@@ -47,7 +47,7 @@ MAPS.planta0 = () => build(34,20,(g,P)=>{
   P('elevator',18,0,{w:2,solid:false});
   P('stairs',25,1,{w:3,h:3,dir:'down'});
   P('locker',29,9,{w:3,opaque:true}); P('cabinet',32,9,{opaque:true,hide:true});
-  P('crate',23,12); P('crate',24,12);
+  P('crate',23,12); P('crate',24,12); P('fusebox',24,8,{solid:false});
   P('car',24,16,{w:3,h:2,color:'#3b4a66',opaque:true}); P('car',28,16,{w:3,h:2,color:'#6b2f2f',opaque:true});
   P('rolldoor',33,15,{h:3,solid:false});
   P('wallcam',21,7,{solid:false,angle:2.3,id:'lobbycam'});
@@ -59,8 +59,8 @@ MAPS.planta0 = () => build(34,20,(g,P)=>{
       lobbyC:{x:11,y:15}, archive:{x:12.5,y:4.5} },
     restricted:[{x0:1,y0:1,x1:8,y1:6,out:'secOut',name:'la sala de control'}],
     photos:[
-      {id:'cam_lobby', x:21.5,y:7.5, label:'Cámara del vestíbulo', note:'Gira sin parar. Detrás de la columna del fondo hay un punto ciego.'},
-      {id:'monitores', x:4.5,y:1.5, label:'Sala de control', note:'Seis monitores. Si la noche del golpe hay alguien aquí mirando, se acabó.'},
+      {id:'cam_lobby', x:21.5,y:7.5, lx:21.3, ly:8.1, label:'Cámara del vestíbulo', note:'Gira sin parar. Detrás de la columna del fondo hay un punto ciego.'},
+      {id:'monitores', x:4.5,y:1.5, lx:4.5, ly:1.95, label:'Sala de control', note:'Seis monitores. Si la noche del golpe hay alguien aquí mirando, se acabó.'},
     ],
     cams:[{id:'lobbycam', x:21.5,y:7.65, a0:105, a1:175, range:9, half:0.36}],
     lights:[
@@ -100,22 +100,22 @@ MAPS.sotano = () => build(28,16,(g,P)=>{
   P('vault',26,6,{h:3,opaque:true});
   P('magsensor',26,5,{solid:false});
   P('sensor',20,2,{solid:false,id:'heat'}); P('sensor',23,13,{solid:false,id:'light'});
-  P('smoke',17,4,{solid:false});
+  P('smoke',21,4,{solid:false});
   P('keyhook',2,9,{solid:false});
   P('shelf',1,14,{w:3,opaque:true}); P('locker',5,14,{w:2,opaque:true}); P('cabinet',6,10,{opaque:true,hide:true});
   P('desk',9,6,{w:2,lamp:true,papers:true});
   P('crate',6,8,{opaque:true}); P('crate',12,6,{opaque:true}); P('cabinet',8,8,{opaque:true,hide:true});
   P('cabinet',16,12,{opaque:true,hide:true});
   return { name:'Sótano −2',
-    spots:{ stairs:{x:3.5,y:3}, corrW:{x:2.5,y:7}, storageOut:{x:4.5,y:7.3}, storageIn:{x:4.5,y:10.7}, anteDoor:{x:14.5,y:7.5}, anteIn:{x:17.2,y:7.5},
-      vaultFront:{x:25,y:7.5}, keyhook:{x:2.5,y:10.4}, verbekeDesk:{x:10,y:7.3}, smoke:{x:17.5,y:5.2}, corrMid:{x:8,y:7} },
+    spots:{ stairs:{x:4.4,y:1.7}, corrW:{x:2.5,y:7}, storageOut:{x:4.5,y:7.3}, storageIn:{x:4.5,y:10.7}, anteDoor:{x:14.5,y:7.5}, anteIn:{x:17.2,y:7.5},
+      vaultFront:{x:25,y:7.5}, keyhook:{x:2.5,y:10.4}, verbekeDesk:{x:10,y:7.3}, smoke:{x:21.5,y:5.2}, corrMid:{x:8,y:7} },
     restricted:[{x0:1,y0:10,x1:6,y1:14,out:'storageOut',name:'el almacén'}],
     zones:[{id:'heat',x0:20,y0:3,x1:20,y1:12,label:'SENSOR TÉRMICO'},{id:'light',x0:23,y0:3,x1:23,y1:12,label:'SENSOR DE LUZ'}],
     photos:[
-      {id:'sensor_heat', x:20.5,y:2.7, label:'Sensor térmico', note:'Calor y movimiento. Elio dirá que se puede cegar.'},
-      {id:'sensor_light', x:23.5,y:13.3, label:'Sensor de luz', note:'Si alguien enciende una linterna ahí dentro, salta.'},
-      {id:'sensor_mag', x:26.5,y:5.5, label:'Sensor magnético', note:'Dos placas en el marco. Si se separan con la alarma puesta: alarma.'},
-      {id:'key', x:2.5,y:9.6, label:'La llave', note:'La llave de la cámara no está en ninguna caja fuerte. Cuelga de un gancho en el almacén.', hidden:true},
+      {id:'sensor_heat', x:20.5,y:2.7, lx:20.5, ly:3.1, label:'Sensor térmico', note:'Calor y movimiento. Elio dirá que se puede cegar.'},
+      {id:'sensor_light', x:23.5,y:13.3, lx:23.5, ly:12.9, label:'Sensor de luz', note:'Si alguien enciende una linterna ahí dentro, salta.'},
+      {id:'sensor_mag', x:26.5,y:5.5, lx:25.9, ly:6.0, label:'Sensor magnético', note:'Dos placas en el marco. Si se separan con la alarma puesta: alarma.'},
+      {id:'key', x:2.5,y:9.6, lx:2.5, ly:10.15, label:'La llave', note:'La llave de la cámara no está en ninguna caja fuerte. Cuelga de un gancho en el almacén.', hidden:true},
     ],
     lights:[
       {x:3,y:2.2,r:2.4,col:'rgba(60,220,120,.10)'}, {x:7,y:7,r:2.8,col:'rgba(242,190,90,.07)'}, {x:10.6,y:6.5,r:2.6,col:'rgba(242,190,90,.12)'},

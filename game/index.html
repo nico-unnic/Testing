@@ -25,11 +25,11 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 
 /* HUD */
 .hud{position:fixed;pointer-events:none}
-#leftCol{left:calc(var(--sl) + 12px);top:calc(var(--st) + 10px);width:min(34vw,340px);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
-#objBox{width:100%;background:color-mix(in srgb,var(--panel) 86%,transparent);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+#leftCol{left:calc(var(--sl) + 12px);top:calc(var(--st) + 10px);width:min(30vw,300px);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+#objBox{width:100%;max-width:300px;background:color-mix(in srgb,var(--panel) 86%,transparent);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
 .lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
 #objText{margin:2px 0 0;font-size:13.5px;line-height:1.3;text-wrap:balance}
-#topMid{left:calc(var(--sl) + 12px + min(34vw,340px) + 14px);right:calc(var(--sr) + 200px);top:calc(var(--st) + 12px);display:flex;flex-direction:column;align-items:center;gap:5px}
+#topMid{left:calc(var(--sl) + 12px + min(30vw,300px) + 14px);right:calc(var(--sr) + 200px);top:calc(var(--st) + 12px);display:flex;flex-direction:column;align-items:center;gap:5px}
 .susp{width:100%;display:flex;align-items:center;gap:8px}
 .bar{flex:1;height:5px;border-radius:3px;background:#1f2840;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--amber)}
@@ -50,6 +50,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 .small{width:60px;height:60px;border-radius:50%;border:1.5px solid var(--line);background:color-mix(in srgb,var(--panel) 88%,transparent);font-weight:600;font-size:12px;line-height:1.1;cursor:pointer;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .small.on{border-color:var(--amber);color:var(--amber);background:var(--amber-deep)}
 #photoBtn{grid-column:2;grid-row:1}
+#coinBtn{grid-column:2;grid-row:1}
 #crouchBtn{grid-column:1;grid-row:2}
 #actBtn{grid-column:2;grid-row:2;width:92px;height:92px;border-radius:50%;border:0;padding:5px;cursor:pointer;touch-action:none;background:conic-gradient(var(--amber) calc(var(--p,0) * 360deg),var(--amber-deep) 0)}
 #actBtn span{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;height:100%;border-radius:50%;background:var(--panel);color:var(--amber);font-weight:600;font-size:12.5px;line-height:1.15;padding:7px}
@@ -145,6 +146,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 <div class="hud" id="toast" hidden></div>
 <div class="hud" id="pad" hidden>
   <button class="small" id="photoBtn" aria-label="Hacer foto">Foto</button>
+  <button class="small" id="coinBtn" aria-label="Lanzar moneda" hidden>Moneda<b id="coinN" style="font-family:var(--font-mono);color:var(--amber)">3</b></button>
   <button class="small" id="crouchBtn" aria-label="Agacharse">Agachar</button>
   <button id="actBtn" class="idle"><span id="actLabel">Usar</span></button>
 </div>
